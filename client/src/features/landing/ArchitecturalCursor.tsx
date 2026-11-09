@@ -122,3 +122,4 @@ export const ArchitecturalCursor: React.FC = () => {
     </div>
   );
 };
+

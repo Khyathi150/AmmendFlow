@@ -363,3 +363,4 @@ export const HeroCinematic: React.FC = () => {
     </div>
   );
 };
+

@@ -51,3 +51,4 @@ jobs:
 
       - name: Compile & Build Frontend Bundle
         run: cd client && npm run build
+

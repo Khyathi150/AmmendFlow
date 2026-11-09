@@ -239,3 +239,4 @@ export const LifecyclePipelineFlow: React.FC = () => {
     </section>
   );
 };
+

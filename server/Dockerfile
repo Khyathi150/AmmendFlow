@@ -24,3 +24,4 @@ RUN mkdir -p uploads
 EXPOSE 5000
 
 CMD ["node", "dist/server.js"]
+

@@ -43,3 +43,4 @@ export const LandingPageView: React.FC = () => {
 };
 
 export default LandingPageView;
+

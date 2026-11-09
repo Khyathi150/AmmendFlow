@@ -47,3 +47,4 @@ services:
 volumes:
   mongo_data:
   server_uploads:
+
