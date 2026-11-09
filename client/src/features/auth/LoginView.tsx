@@ -40,13 +40,13 @@ export const LoginView: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-white shadow-md font-bold text-xl mb-3">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-industrial border border-copper text-parchment shadow-copper font-bold text-xl mb-3 font-mono">
           AF
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-text-primary">
+        <h2 className="text-2xl font-bold tracking-tight text-parchment">
           AmendFlow
         </h2>
-        <p className="text-xs text-text-secondary mt-1 max-w-xs mx-auto">
+        <p className="text-xs text-limestone mt-1 max-w-xs mx-auto">
           Every change accounted for. Every cost protected.
         </p>
       </div>

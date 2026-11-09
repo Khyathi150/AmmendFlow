@@ -1,18 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 export const ArchitecturalCursor: React.FC = () => {
-  const [coords, setCoords] = useState<{ x: number; y: number }>({ x: -100, y: -100 });
   const [isHovered, setIsHovered] = useState(false);
   const [isPointer, setIsPointer] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const xCoordRef = useRef<HTMLSpanElement>(null);
+  const yCoordRef = useRef<HTMLSpanElement>(null);
   const targetPos = useRef({ x: -100, y: -100 });
   const currentPos = useRef({ x: -100, y: -100 });
   const rafId = useRef<number | null>(null);
 
   useEffect(() => {
-    // Only activate for non-touch devices
+    // Only activate for non-touch devices and respect reduced motion
     if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       targetPos.current = { x: e.clientX, y: e.clientY };
@@ -36,9 +38,9 @@ export const ArchitecturalCursor: React.FC = () => {
       setIsVisible(true);
     };
 
-    // Smooth animation loop
+    // Smooth 60fps/120fps animation loop with zero React re-render churn
     const updateLoop = () => {
-      const ease = 0.22;
+      const ease = 0.26;
       currentPos.current.x += (targetPos.current.x - currentPos.current.x) * ease;
       currentPos.current.y += (targetPos.current.y - currentPos.current.y) * ease;
 
@@ -46,15 +48,20 @@ export const ArchitecturalCursor: React.FC = () => {
         cursorRef.current.style.transform = `translate3d(${currentPos.current.x}px, ${currentPos.current.y}px, 0)`;
       }
 
-      setCoords({
-        x: Math.round(currentPos.current.x),
-        y: Math.round(currentPos.current.y),
-      });
+      const roundedX = Math.round(currentPos.current.x);
+      const roundedY = Math.round(currentPos.current.y);
+
+      if (xCoordRef.current) {
+        xCoordRef.current.textContent = `X:${roundedX}`;
+      }
+      if (yCoordRef.current) {
+        yCoordRef.current.textContent = `Y:${roundedY}`;
+      }
 
       rafId.current = requestAnimationFrame(updateLoop);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseleave', handleMouseLeave);
     document.addEventListener('mouseenter', handleMouseEnter);
     rafId.current = requestAnimationFrame(updateLoop);
@@ -74,7 +81,7 @@ export const ArchitecturalCursor: React.FC = () => {
       ref={cursorRef}
       className="fixed top-0 left-0 pointer-events-none z-[9999] will-change-transform -translate-x-1/2 -translate-y-1/2"
       style={{
-        transition: 'opacity 0.2s ease',
+        transition: 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         opacity: isVisible ? 1 : 0,
       }}
     >
@@ -93,9 +100,9 @@ export const ArchitecturalCursor: React.FC = () => {
           }`}
         />
 
-        {/* Center reticle */}
+        {/* Center reticle with spring scaling */}
         <div
-          className={`w-5 h-5 rounded-full border transition-all duration-200 flex items-center justify-center ${
+          className={`w-5 h-5 rounded-full border transition-all duration-300 ease-out flex items-center justify-center ${
             isHovered
               ? 'scale-150 border-copper bg-copper/20 shadow-copper'
               : isPointer
@@ -110,12 +117,12 @@ export const ArchitecturalCursor: React.FC = () => {
           />
         </div>
 
-        {/* Dynamic CAD Coordinate Readout in Forest Charcoal & Limestone */}
+        {/* Dynamic CAD Coordinate Readout (High performance DOM-bound) */}
         <div className="absolute left-4 top-4 select-none pointer-events-none whitespace-nowrap">
-          <div className="font-mono text-[9px] tracking-widest px-2 py-0.5 rounded bg-forest/95 text-parchment border border-olive/50 backdrop-blur-md shadow-elevated">
-            <span>X:{coords.x}</span>
-            <span className="mx-1 text-copper">|</span>
-            <span>Y:{coords.y}</span>
+          <div className="font-mono text-[9px] tracking-widest px-2 py-0.5 rounded bg-forest/95 text-parchment border border-olive/50 backdrop-blur-md shadow-elevated flex items-center gap-1">
+            <span ref={xCoordRef}>X:0</span>
+            <span className="text-copper">|</span>
+            <span ref={yCoordRef}>Y:0</span>
           </div>
         </div>
       </div>

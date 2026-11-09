@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
 
 interface Hotspot {
@@ -16,6 +16,7 @@ export const InteractiveBlueprintCompare: React.FC = () => {
   const [sliderPos, setSliderPos] = useState<number>(50); // 0 to 100%
   const [activeHotspot, setActiveHotspot] = useState<string>('pile');
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const hotspots: Hotspot[] = [
     {
@@ -62,19 +63,29 @@ export const InteractiveBlueprintCompare: React.FC = () => {
 
   const currentHotspotData = hotspots.find((h) => h.id === activeHotspot) || hotspots[0];
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Fluid, boundary-free drag tracking
+  useEffect(() => {
     if (!isDragging) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    setSliderPos((x / rect.width) * 100);
-  };
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
-    setSliderPos((x / rect.width) * 100);
-  };
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      setSliderPos((x / rect.width) * 100);
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [isDragging]);
 
   return (
     <section id="compare-section" className="py-24 bg-forest text-parchment relative overflow-hidden border-t border-olive/20">
@@ -101,7 +112,7 @@ export const InteractiveBlueprintCompare: React.FC = () => {
           <div className="mt-4 md:mt-0 flex items-center gap-2 font-mono text-xs">
             <button
               onClick={() => setSliderPos(100)}
-              className={`px-3 py-1.5 rounded border transition-colors ${
+              className={`px-3 py-1.5 rounded border transition-all duration-300 ${
                 sliderPos > 90 ? 'bg-limestone/20 border-limestone text-parchment' : 'border-olive/40 text-limestone hover:text-parchment'
               }`}
             >
@@ -109,7 +120,7 @@ export const InteractiveBlueprintCompare: React.FC = () => {
             </button>
             <button
               onClick={() => setSliderPos(50)}
-              className={`px-3 py-1.5 rounded border transition-colors ${
+              className={`px-3 py-1.5 rounded border transition-all duration-300 ${
                 sliderPos >= 40 && sliderPos <= 60 ? 'bg-copper/25 border-copper text-copper font-bold' : 'border-olive/40 text-limestone hover:text-parchment'
               }`}
             >
@@ -117,7 +128,7 @@ export const InteractiveBlueprintCompare: React.FC = () => {
             </button>
             <button
               onClick={() => setSliderPos(0)}
-              className={`px-3 py-1.5 rounded border transition-colors ${
+              className={`px-3 py-1.5 rounded border transition-all duration-300 ${
                 sliderPos < 10 ? 'bg-copper/25 border-copper text-copper font-bold' : 'border-olive/40 text-limestone hover:text-parchment'
               }`}
             >
@@ -131,12 +142,16 @@ export const InteractiveBlueprintCompare: React.FC = () => {
           {/* Main Interactive Drawing Canvas (8 Cols) */}
           <div className="lg:col-span-8">
             <div
-              className="relative w-full h-[420px] sm:h-[520px] rounded-xl bg-industrial-dark border border-olive/50 overflow-hidden shadow-2xl select-none cursor-ew-resize"
-              onMouseDown={() => setIsDragging(true)}
-              onMouseUp={() => setIsDragging(false)}
-              onMouseLeave={() => setIsDragging(false)}
-              onMouseMove={handleMouseMove}
-              onTouchMove={handleTouchMove}
+              ref={containerRef}
+              className="relative w-full h-[420px] sm:h-[520px] rounded-xl bg-industrial-dark border border-olive/50 overflow-hidden shadow-2xl select-none cursor-ew-resize touch-none will-change-transform"
+              onPointerDown={(e) => {
+                setIsDragging(true);
+                if (containerRef.current) {
+                  const rect = containerRef.current.getBoundingClientRect();
+                  const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                  setSliderPos((x / rect.width) * 100);
+                }
+              }}
             >
               {/* Layer 1: Revised Variation Drawing (Background Base in Industrial Green) */}
               <div className="absolute inset-0 p-6 flex flex-col justify-between bg-industrial">
@@ -190,11 +205,12 @@ export const InteractiveBlueprintCompare: React.FC = () => {
                 </div>
               </div>
 
-              {/* Layer 2: Baseline Drawing (Clipped via Slider position, in Deep Forest Charcoal) */}
+              {/* Layer 2: Baseline Drawing (Clipped via Slider position with smooth CSS transition when not dragging) */}
               <div
-                className="absolute inset-0 p-6 flex flex-col justify-between bg-forest border-r border-limestone"
+                className="absolute inset-0 p-6 flex flex-col justify-between bg-forest border-r border-limestone will-change-[clip-path]"
                 style={{
                   clipPath: `polygon(0 0, ${sliderPos}% 0, ${sliderPos}% 100%, 0 100%)`,
+                  transition: isDragging ? 'none' : 'clip-path 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
                 <div className="flex justify-between text-[10px] font-mono text-limestone font-bold">
@@ -232,15 +248,18 @@ export const InteractiveBlueprintCompare: React.FC = () => {
 
               {/* Draggable Divider Handle in Limestone & Copper */}
               <div
-                className="absolute top-0 bottom-0 w-[2px] bg-limestone cursor-ew-resize z-30"
-                style={{ left: `${sliderPos}%` }}
+                className="absolute top-0 bottom-0 w-[2px] bg-limestone cursor-ew-resize z-30 will-change-[left]"
+                style={{
+                  left: `${sliderPos}%`,
+                  transition: isDragging ? 'none' : 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
               >
-                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-forest border-2 border-copper text-parchment flex items-center justify-center shadow-elevated">
+                <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-forest border-2 border-copper text-parchment flex items-center justify-center shadow-elevated transition-transform hover:scale-110 active:scale-95">
                   <ArrowLeftRight className="w-3.5 h-3.5 text-copper" />
                 </div>
               </div>
 
-              {/* Clickable Interactive Hotspot Pins */}
+              {/* Clickable Interactive Hotspot Pins with Pulsing Radar Rings */}
               {hotspots.map((spot) => (
                 <button
                   key={spot.id}
@@ -248,15 +267,20 @@ export const InteractiveBlueprintCompare: React.FC = () => {
                     e.stopPropagation();
                     setActiveHotspot(spot.id);
                   }}
-                  className={`absolute z-40 transform -translate-x-1/2 -translate-y-1/2 group transition-all ${
-                    activeHotspot === spot.id ? 'scale-125' : 'hover:scale-110'
-                  }`}
-                  style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+                  className="absolute z-40 transform -translate-x-1/2 -translate-y-1/2 group transition-transform duration-300 ease-out"
+                  style={{
+                    left: `${spot.x}%`,
+                    top: `${spot.y}%`,
+                    transform: activeHotspot === spot.id ? 'translate(-50%, -50%) scale(1.2)' : 'translate(-50%, -50%) scale(1)',
+                  }}
                   data-blueprint-hotspot="true"
                 >
                   <div className="relative flex items-center justify-center">
+                    {/* Subtle Radar Ring */}
+                    <span className="absolute -inset-1.5 rounded-full bg-copper/20 animate-ping opacity-60 pointer-events-none" />
+
                     <span
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-200 ${
                         activeHotspot === spot.id
                           ? 'border-copper bg-copper text-parchment shadow-copper'
                           : 'border-limestone bg-forest text-parchment group-hover:border-copper'
@@ -264,7 +288,7 @@ export const InteractiveBlueprintCompare: React.FC = () => {
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-current" />
                     </span>
-                    <span className="absolute -top-6 whitespace-nowrap font-mono text-[9px] px-2 py-0.5 rounded bg-forest/95 text-parchment border border-olive/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="absolute -top-6 whitespace-nowrap font-mono text-[9px] px-2 py-0.5 rounded bg-forest/95 text-parchment border border-olive/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                       {spot.label}
                     </span>
                   </div>
@@ -293,26 +317,28 @@ export const InteractiveBlueprintCompare: React.FC = () => {
                 <span className="font-mono text-[10px] text-limestone">AUDIT LOG</span>
               </div>
 
-              {/* Title & Specifications */}
-              <h3 className="text-xl font-bold text-parchment mb-2">
-                {currentHotspotData.title}
-              </h3>
+              {/* Title & Specifications with Animated Content Switch */}
+              <div key={activeHotspot} className="animate-in fade-in duration-300">
+                <h3 className="text-xl font-bold text-parchment mb-2">
+                  {currentHotspotData.title}
+                </h3>
 
-              <div className="p-3 rounded bg-forest border border-olive/40 font-mono text-xs mb-4">
-                <span className="text-limestone block text-[10px] uppercase mb-1">TECHNICAL SPECIFICATION</span>
-                <span className="text-parchment leading-relaxed">{currentHotspotData.spec}</span>
-              </div>
+                <div className="p-3 rounded bg-forest border border-olive/40 font-mono text-xs mb-4">
+                  <span className="text-limestone block text-[10px] uppercase mb-1">TECHNICAL SPECIFICATION</span>
+                  <span className="text-parchment leading-relaxed">{currentHotspotData.spec}</span>
+                </div>
 
-              {/* Commercial Cost Impact in Copper Highlight */}
-              <div className="p-3 rounded bg-copper/15 border border-copper/50 font-mono text-xs mb-4">
-                <span className="text-copper block text-[10px] uppercase font-bold mb-1">COMMERCIAL IMPACT</span>
-                <span className="text-copper font-bold text-sm">{currentHotspotData.commercialImpact}</span>
-              </div>
+                {/* Commercial Cost Impact in Copper Highlight */}
+                <div className="p-3 rounded bg-copper/15 border border-copper/50 font-mono text-xs mb-4">
+                  <span className="text-copper block text-[10px] uppercase font-bold mb-1">COMMERCIAL IMPACT</span>
+                  <span className="text-copper font-bold text-sm">{currentHotspotData.commercialImpact}</span>
+                </div>
 
-              {/* Field Engineer & Consultant Note */}
-              <div className="space-y-1 text-xs text-limestone leading-relaxed font-sans mb-6">
-                <span className="font-mono text-[10px] text-limestone/70 block uppercase">ENGINEERING JUSTIFICATION</span>
-                <p>{currentHotspotData.engineerNote}</p>
+                {/* Field Engineer & Consultant Note */}
+                <div className="space-y-1 text-xs text-limestone leading-relaxed font-sans mb-6">
+                  <span className="font-mono text-[10px] text-limestone/70 block uppercase">ENGINEERING JUSTIFICATION</span>
+                  <p>{currentHotspotData.engineerNote}</p>
+                </div>
               </div>
 
               {/* Hotspot Switcher Tabs */}
@@ -323,10 +349,10 @@ export const InteractiveBlueprintCompare: React.FC = () => {
                     <button
                       key={h.id}
                       onClick={() => setActiveHotspot(h.id)}
-                      className={`text-left px-2.5 py-1.5 rounded font-mono text-[10px] tracking-wider border transition-colors ${
+                      className={`text-left px-2.5 py-1.5 rounded font-mono text-[10px] tracking-wider border transition-all duration-200 ${
                         activeHotspot === h.id
-                          ? 'border-copper bg-copper/25 text-parchment font-bold'
-                          : 'border-olive/30 bg-forest/80 text-limestone hover:text-parchment'
+                          ? 'border-copper bg-copper/25 text-parchment font-bold scale-[1.02]'
+                          : 'border-olive/30 bg-forest/80 text-limestone hover:text-parchment hover:border-olive'
                       }`}
                     >
                       {h.label}

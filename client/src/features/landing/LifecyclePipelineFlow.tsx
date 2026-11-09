@@ -127,30 +127,30 @@ export const LifecyclePipelineFlow: React.FC = () => {
               <button
                 key={st.id}
                 onClick={() => setActiveStep(idx)}
-                className={`text-left p-3 rounded-lg border transition-all cursor-pointer relative group flex flex-col justify-between h-36 ${
+                className={`text-left p-3 rounded-lg border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer relative group flex flex-col justify-between h-36 will-change-transform ${
                   isSelected
-                    ? 'bg-forest text-parchment border-copper shadow-elevated scale-105 z-20'
-                    : 'bg-[#DCD0BB] hover:bg-parchment-light border-limestone-dark/60 text-forest'
+                    ? 'bg-forest text-parchment border-copper shadow-elevated scale-[1.03] z-20'
+                    : 'bg-[#DCD0BB] hover:bg-parchment-light hover:-translate-y-0.5 border-limestone-dark/60 text-forest'
                 }`}
               >
                 {/* Step Number & Line */}
                 <div className="flex items-center justify-between w-full">
                   <span
-                    className={`font-mono text-[10px] tracking-wider font-bold ${
+                    className={`font-mono text-[10px] tracking-wider font-bold transition-colors duration-200 ${
                       isSelected ? 'text-copper' : 'text-olive'
                     }`}
                   >
                     STEP {st.number}
                   </span>
-                  <Icon className={`w-4 h-4 ${isSelected ? 'text-copper' : 'text-forest/70 group-hover:text-copper'}`} />
+                  <Icon className={`w-4 h-4 transition-colors duration-200 ${isSelected ? 'text-copper' : 'text-forest/70 group-hover:text-copper'}`} />
                 </div>
 
                 {/* Title */}
                 <div>
-                  <h4 className={`text-xs font-bold leading-tight ${isSelected ? 'text-parchment' : 'text-forest'}`}>
+                  <h4 className={`text-xs font-bold leading-tight transition-colors duration-200 ${isSelected ? 'text-parchment' : 'text-forest'}`}>
                     {st.title}
                   </h4>
-                  <p className={`text-[10px] mt-0.5 truncate ${isSelected ? 'text-limestone' : 'text-industrial'}`}>
+                  <p className={`text-[10px] mt-0.5 truncate transition-colors duration-200 ${isSelected ? 'text-limestone' : 'text-industrial'}`}>
                     {st.role}
                   </p>
                 </div>
@@ -158,7 +158,7 @@ export const LifecyclePipelineFlow: React.FC = () => {
                 {/* Progress bar pill */}
                 <div className="w-full h-1 rounded-full bg-black/15 overflow-hidden mt-1">
                   <div
-                    className={`h-full ${
+                    className={`h-full transition-all duration-500 ease-out ${
                       isSelected ? 'bg-copper' : idx < activeStep ? 'bg-olive' : 'bg-transparent'
                     }`}
                   />
@@ -169,46 +169,48 @@ export const LifecyclePipelineFlow: React.FC = () => {
         </div>
 
         {/* Active Stage Detailed Audit Dossier Card in Deep Forest Charcoal */}
-        <div className="rounded-xl bg-forest text-parchment border border-olive/60 shadow-2xl p-6 sm:p-8 max-w-4xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-olive/30 pb-4 mb-6 gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-copper text-parchment flex items-center justify-center font-mono font-bold text-base shadow-copper">
-                {steps[activeStep].number}
+        <div className="rounded-xl bg-forest text-parchment border border-olive/60 shadow-2xl p-6 sm:p-8 max-w-4xl mx-auto transition-all duration-300">
+          <div key={activeStep} className="animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-olive/30 pb-4 mb-6 gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-copper text-parchment flex items-center justify-center font-mono font-bold text-base shadow-copper">
+                  {steps[activeStep].number}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-parchment">
+                    {steps[activeStep].title} — Governance Specifications
+                  </h3>
+                  <p className="text-xs text-limestone font-mono">
+                    ACTOR ROLE: {steps[activeStep].role.toUpperCase()}
+                  </p>
+                </div>
               </div>
+
+              <span className="font-mono text-xs px-2.5 py-1 rounded bg-industrial text-copper border border-copper/40 font-semibold self-start sm:self-auto">
+                DATA ARTIFACT: {steps[activeStep].dataArtifact}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div>
-                <h3 className="text-xl font-bold text-parchment">
-                  {steps[activeStep].title} — Governance Specifications
-                </h3>
-                <p className="text-xs text-limestone font-mono">
-                  ACTOR ROLE: {steps[activeStep].role.toUpperCase()}
+                <span className="font-mono text-[10px] text-limestone uppercase tracking-wider block mb-1">
+                  COMMERCIAL GOVERNANCE RULE
+                </span>
+                <p className="text-parchment font-medium leading-relaxed">
+                  {steps[activeStep].governanceRule}
                 </p>
               </div>
-            </div>
 
-            <span className="font-mono text-xs px-2.5 py-1 rounded bg-industrial text-copper border border-copper/40 font-semibold self-start sm:self-auto">
-              DATA ARTIFACT: {steps[activeStep].dataArtifact}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-            <div>
-              <span className="font-mono text-[10px] text-limestone uppercase tracking-wider block mb-1">
-                COMMERCIAL GOVERNANCE RULE
-              </span>
-              <p className="text-parchment font-medium leading-relaxed">
-                {steps[activeStep].governanceRule}
-              </p>
-            </div>
-
-            <div>
-              <span className="font-mono text-[10px] text-limestone uppercase tracking-wider block mb-1">
-                SYSTEM SAFEGUARDS
-              </span>
-              <ul className="text-limestone text-xs space-y-1.5 list-disc list-inside">
-                <li>Automated audit logging in append-only Activity Ledger</li>
-                <li>Minor units (paise) integer precision without floating drift</li>
-                <li>Role-based access control with tenant isolation</li>
-              </ul>
+              <div>
+                <span className="font-mono text-[10px] text-limestone uppercase tracking-wider block mb-1">
+                  SYSTEM SAFEGUARDS
+                </span>
+                <ul className="text-limestone text-xs space-y-1.5 list-disc list-inside">
+                  <li>Automated audit logging in append-only Activity Ledger</li>
+                  <li>Minor units (paise) integer precision without floating drift</li>
+                  <li>Role-based access control with tenant isolation</li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -220,14 +222,14 @@ export const LifecyclePipelineFlow: React.FC = () => {
               <button
                 onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
                 disabled={activeStep === 0}
-                className="px-3 py-1 rounded border border-olive/40 disabled:opacity-30 hover:bg-industrial text-parchment"
+                className="px-3 py-1 rounded border border-olive/40 disabled:opacity-30 hover:bg-industrial text-parchment transition-all duration-200 active:scale-95"
               >
                 Previous Step
               </button>
               <button
                 onClick={() => setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))}
                 disabled={activeStep === steps.length - 1}
-                className="px-3 py-1 rounded bg-copper text-parchment disabled:opacity-30 hover:bg-copper-hover font-semibold"
+                className="px-3 py-1 rounded bg-copper text-parchment disabled:opacity-30 hover:bg-copper-hover font-semibold transition-all duration-200 active:scale-95"
               >
                 Next Step
               </button>

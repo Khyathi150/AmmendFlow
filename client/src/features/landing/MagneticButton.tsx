@@ -25,6 +25,9 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled || !buttonRef.current) return;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
     const { clientX, clientY } = e;
     const { left, top, width, height } = buttonRef.current.getBoundingClientRect();
 
@@ -68,7 +71,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
       onMouseLeave={handleMouseLeave}
       animate={{ x: position.x, y: position.y }}
       transition={{ type: 'spring', stiffness: 220, damping: 18, mass: 0.2 }}
-      whileTap={{ scale: 0.96 }}
+      whileTap={{ scale: 0.98 }}
       className={`relative inline-flex items-center justify-center font-medium transition-colors cursor-pointer select-none overflow-hidden rounded-md ${variantStyles[variant] || variantStyles.copper} ${className}`}
       data-cursor-target="true"
     >

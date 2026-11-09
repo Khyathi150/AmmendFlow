@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowDown, AlertTriangle, ChevronRight } from 'lucide-react';
 import { MagneticButton } from './MagneticButton';
 import { Link } from 'react-router-dom';
@@ -10,15 +9,22 @@ export const HeroCinematic: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 5-second cinematic progression
-    const t1 = setTimeout(() => setAnimationStep(1), 300);   // Grid & Datum
-    const t2 = setTimeout(() => setAnimationStep(2), 1200);  // Blueprint vector drawing
-    const t3 = setTimeout(() => setAnimationStep(3), 2400);  // Image-mask revelation
-    const t4 = setTimeout(() => setAnimationStep(4), 3300);  // Kinetic typography reveal
+    // Respect reduced motion: instantly complete
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setAnimationStep(5);
+      setVariationActive(true);
+      return;
+    }
+
+    // 5-second cinematic progression with refined, fluid rhythm
+    const t1 = setTimeout(() => setAnimationStep(1), 250);   // Grid & Datum
+    const t2 = setTimeout(() => setAnimationStep(2), 1000);  // Blueprint vector drawing
+    const t3 = setTimeout(() => setAnimationStep(3), 2200);  // Image-mask revelation
+    const t4 = setTimeout(() => setAnimationStep(4), 3100);  // Kinetic typography reveal
     const t5 = setTimeout(() => {
       setAnimationStep(5);
       setVariationActive(true);
-    }, 4400); // Variation marker & cost ticker
+    }, 4200); // Variation marker & cost ticker
 
     return () => {
       clearTimeout(t1);
@@ -39,7 +45,7 @@ export const HeroCinematic: React.FC = () => {
         <img
           src="https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?q=80&w=2070&auto=format&fit=crop"
           alt="Architectural Concrete Structure"
-          className={`w-full h-full object-cover object-center filter grayscale contrast-130 brightness-75 transition-all duration-1000 ${
+          className={`w-full h-full object-cover object-center filter grayscale contrast-130 brightness-75 transition-all duration-1000 ease-out will-change-transform ${
             animationStep >= 3 ? 'opacity-30 scale-100' : 'opacity-15 scale-105'
           }`}
         />
@@ -68,14 +74,14 @@ export const HeroCinematic: React.FC = () => {
           <span className="text-copper font-bold">+</span>
         </div>
 
-        {/* Dynamic Sweeping Grid Line in Olive/Copper */}
+        {/* Dynamic Sweeping Grid Line in Olive/Copper with Smooth Easing */}
         <div
-          className={`absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-olive/50 to-transparent transition-all duration-1000 ${
+          className={`absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-olive/50 to-transparent transition-all duration-1000 ease-out ${
             animationStep >= 1 ? 'top-1/2 opacity-100' : 'top-0 opacity-0'
           }`}
         />
         <div
-          className={`absolute top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-olive/40 to-transparent transition-all duration-1000 ${
+          className={`absolute top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-olive/40 to-transparent transition-all duration-1000 ease-out ${
             animationStep >= 1 ? 'left-1/2 opacity-100' : 'left-0 opacity-0'
           }`}
         />
@@ -95,7 +101,7 @@ export const HeroCinematic: React.FC = () => {
           </defs>
 
           {/* Geological Strata Boundaries in Weathered Olive */}
-          <g className={`transition-opacity duration-1000 ${animationStep >= 1 ? 'opacity-85' : 'opacity-0'}`}>
+          <g className={`transition-opacity duration-1000 ease-out ${animationStep >= 1 ? 'opacity-85' : 'opacity-0'}`}>
             <line x1="50" y1="340" x2="550" y2="340" stroke="#68745B" strokeWidth="1" strokeDasharray="4 4" />
             <text x="60" y="335" fill="#C9B99E" fontSize="9" fontFamily="monospace">STRATUM 01: COMPACT SILTY CLAY</text>
             
@@ -115,7 +121,7 @@ export const HeroCinematic: React.FC = () => {
             </text>
           </g>
 
-          {/* Pier Column & Pile Cap Outline in Natural Limestone */}
+          {/* Pier Column & Pile Cap Outline in Natural Limestone with Fluid Stroke Drawing */}
           <g>
             {/* Pier Head Cantilever */}
             <path
@@ -123,26 +129,26 @@ export const HeroCinematic: React.FC = () => {
               fill="none"
               stroke="#C9B99E"
               strokeWidth="1.8"
-              strokeDasharray={animationStep >= 2 ? '0' : '600'}
-              strokeDashoffset={animationStep >= 2 ? '0' : '600'}
-              style={{ transition: 'stroke-dashoffset 1.8s ease-in-out' }}
+              strokeDasharray="600"
+              strokeDashoffset={animationStep >= 2 ? 0 : 600}
+              style={{ transition: 'stroke-dashoffset 1.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
             />
             {/* Pier Shaft */}
             <line
               x1="240" y1="160" x2="240" y2="340"
               stroke="#C9B99E"
               strokeWidth="2"
-              strokeDasharray={animationStep >= 2 ? '0' : '200'}
-              strokeDashoffset={animationStep >= 2 ? '0' : '200'}
-              style={{ transition: 'stroke-dashoffset 1.4s ease-in-out 0.3s' }}
+              strokeDasharray="200"
+              strokeDashoffset={animationStep >= 2 ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s' }}
             />
             <line
               x1="360" y1="160" x2="360" y2="340"
               stroke="#C9B99E"
               strokeWidth="2"
-              strokeDasharray={animationStep >= 2 ? '0' : '200'}
-              strokeDashoffset={animationStep >= 2 ? '0' : '200'}
-              style={{ transition: 'stroke-dashoffset 1.4s ease-in-out 0.3s' }}
+              strokeDasharray="200"
+              strokeDashoffset={animationStep >= 2 ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s' }}
             />
 
             {/* Pile Cap */}
@@ -151,66 +157,100 @@ export const HeroCinematic: React.FC = () => {
               fill="none"
               stroke="#C9B99E"
               strokeWidth="2"
-              strokeDasharray={animationStep >= 2 ? '0' : '700'}
-              strokeDashoffset={animationStep >= 2 ? '0' : '700'}
-              style={{ transition: 'stroke-dashoffset 1.6s ease-in-out 0.5s' }}
+              strokeDasharray="700"
+              strokeDashoffset={animationStep >= 2 ? 0 : 700}
+              style={{ transition: 'stroke-dashoffset 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s' }}
             />
 
             {/* Bored Foundation Piles (Baseline: to Y=540) */}
-            <line x1="210" y1="410" x2="210" y2="540" stroke="#C9B99E" strokeWidth="2.5" />
-            <line x1="270" y1="410" x2="270" y2="540" stroke="#C9B99E" strokeWidth="2.5" />
-            <line x1="330" y1="410" x2="330" y2="540" stroke="#C9B99E" strokeWidth="2.5" />
-            <line x1="390" y1="410" x2="390" y2="540" stroke="#C9B99E" strokeWidth="2.5" />
+            <line
+              x1="210" y1="410" x2="210" y2="540"
+              stroke="#C9B99E"
+              strokeWidth="2.5"
+              strokeDasharray="200"
+              strokeDashoffset={animationStep >= 2 ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.7s' }}
+            />
+            <line
+              x1="270" y1="410" x2="270" y2="540"
+              stroke="#C9B99E"
+              strokeWidth="2.5"
+              strokeDasharray="200"
+              strokeDashoffset={animationStep >= 2 ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.7s' }}
+            />
+            <line
+              x1="330" y1="410" x2="330" y2="540"
+              stroke="#C9B99E"
+              strokeWidth="2.5"
+              strokeDasharray="200"
+              strokeDashoffset={animationStep >= 2 ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.7s' }}
+            />
+            <line
+              x1="390" y1="410" x2="390" y2="540"
+              stroke="#C9B99E"
+              strokeWidth="2.5"
+              strokeDasharray="200"
+              strokeDashoffset={animationStep >= 2 ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.7s' }}
+            />
 
             {/* Pile Base Line Baseline */}
             <line x1="190" y1="540" x2="410" y2="540" stroke="#C9B99E" strokeWidth="1.5" strokeDasharray="3 3" />
             <text x="420" y="543" fill="#C9B99E" fontSize="8" fontFamily="monospace">BASELINE EMBEDMENT: -12.00M</text>
 
-            {/* VARIATION ACTIVE: Animated Extension into Hard Granite (+3.0m in Oxidised Copper) */}
-            {variationActive && (
-              <g className="animate-in fade-in duration-700">
-                {/* Extended Pile Shanks */}
-                <line x1="210" y1="540" x2="210" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
-                <line x1="270" y1="540" x2="270" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
-                <line x1="330" y1="540" x2="330" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
-                <line x1="390" y1="540" x2="390" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
+            {/* VARIATION ACTIVE: Smooth Stroke Extension into Hard Granite (+3.0m in Oxidised Copper) */}
+            <g
+              className="transition-all duration-700 ease-out"
+              style={{
+                opacity: variationActive ? 1 : 0,
+                transform: variationActive ? 'translateY(0)' : 'translateY(-6px)',
+              }}
+            >
+              {/* Extended Pile Shanks */}
+              <line x1="210" y1="540" x2="210" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
+              <line x1="270" y1="540" x2="270" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
+              <line x1="330" y1="540" x2="330" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
+              <line x1="390" y1="540" x2="390" y2="620" stroke="#BD6847" strokeWidth="3" strokeDasharray="4 2" />
 
-                {/* Revised Bottom Embedment */}
-                <line x1="190" y1="620" x2="410" y2="620" stroke="#BD6847" strokeWidth="2" />
-                <text x="420" y="624" fill="#BD6847" fontSize="9" fontFamily="monospace" fontWeight="bold">
-                  REVISED EMBEDMENT: -15.00M (+3.0M)
-                </text>
+              {/* Revised Bottom Embedment */}
+              <line x1="190" y1="620" x2="410" y2="620" stroke="#BD6847" strokeWidth="2" />
+              <text x="420" y="624" fill="#BD6847" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                REVISED EMBEDMENT: -15.00M (+3.0M)
+              </text>
 
-                {/* Oxidised Copper Revision Cloud */}
-                <path
-                  d="M 180 520 C 180 500, 220 500, 230 515 C 245 495, 290 495, 305 515 C 320 495, 370 495, 385 515 C 410 500, 435 520, 425 545 C 445 565, 435 605, 420 625 C 435 645, 395 655, 380 640 C 365 655, 315 655, 300 640 C 285 655, 240 655, 225 640 C 205 655, 175 640, 185 615 C 165 595, 170 550, 180 520 Z"
-                  fill="url(#copperCloudGrad)"
-                  stroke="#BD6847"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 2"
-                />
+              {/* Oxidised Copper Revision Cloud with Soft Scale */}
+              <path
+                d="M 180 520 C 180 500, 220 500, 230 515 C 245 495, 290 495, 305 515 C 320 495, 370 495, 385 515 C 410 500, 435 520, 425 545 C 445 565, 435 605, 420 625 C 435 645, 395 655, 380 640 C 365 655, 315 655, 300 640 C 285 655, 240 655, 225 640 C 205 655, 175 640, 185 615 C 165 595, 170 550, 180 520 Z"
+                fill="url(#copperCloudGrad)"
+                stroke="#BD6847"
+                strokeWidth="1.5"
+                strokeDasharray="4 2"
+              />
 
-                {/* Delta Dimension Indicator */}
-                <line x1="160" y1="540" x2="160" y2="620" stroke="#BD6847" strokeWidth="1.5" />
-                <polygon points="160,540 157,548 163,548" fill="#BD6847" />
-                <polygon points="160,620 157,612 163,612" fill="#BD6847" />
-                <text x="110" y="585" fill="#BD6847" fontSize="10" fontFamily="monospace" fontWeight="bold">
-                  Δ +3.00M
-                </text>
-              </g>
-            )}
+              {/* Delta Dimension Indicator */}
+              <line x1="160" y1="540" x2="160" y2="620" stroke="#BD6847" strokeWidth="1.5" />
+              <polygon points="160,540 157,548 163,548" fill="#BD6847" />
+              <polygon points="160,620 157,612 163,612" fill="#BD6847" />
+              <text x="110" y="585" fill="#BD6847" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                Δ +3.00M
+              </text>
+            </g>
           </g>
         </svg>
       </div>
 
-      {/* 4. Main Editorial Content in Warm Parchment & Natural Limestone */}
+      {/* 4. Main Editorial Content with Staggered Kinetic Typography */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col justify-center">
         <div className="max-w-3xl">
           {/* Technical Eyebrow Badge */}
           <div
-            className={`transition-all duration-700 ${
-              animationStep >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className="transition-all duration-700 ease-out will-change-transform"
+            style={{
+              opacity: animationStep >= 3 ? 1 : 0,
+              transform: animationStep >= 3 ? 'translateY(0)' : 'translateY(16px)',
+            }}
           >
             <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded bg-industrial border border-olive/50 backdrop-blur-md mb-6 shadow-subtle">
               <span className="w-2 h-2 rounded-full bg-copper animate-ping" />
@@ -223,12 +263,15 @@ export const HeroCinematic: React.FC = () => {
             </div>
           </div>
 
-          {/* Kinetic Headline Reveal in Parchment & Limestone */}
+          {/* Kinetic Headline Reveal in Parchment & Limestone with Smooth Cubic-Bezier Curves */}
           <div className="overflow-hidden mb-2">
             <h1
-              className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-parchment leading-[1.08] transition-all duration-1000 ${
-                animationStep >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-              }`}
+              className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-parchment leading-[1.08] will-change-transform transition-all duration-1000"
+              style={{
+                transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                opacity: animationStep >= 4 ? 1 : 0,
+                transform: animationStep >= 4 ? 'translateY(0)' : 'translateY(48px)',
+              }}
             >
               EVERY CHANGE <br />
               <span className="text-limestone">ACCOUNTED FOR.</span>
@@ -237,9 +280,13 @@ export const HeroCinematic: React.FC = () => {
 
           <div className="overflow-hidden mb-6">
             <h2
-              className={`text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-parchment-light leading-[1.1] transition-all duration-1000 delay-200 ${
-                animationStep >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-              }`}
+              className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-parchment-light leading-[1.1] will-change-transform transition-all duration-1000"
+              style={{
+                transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                transitionDelay: '150ms',
+                opacity: animationStep >= 4 ? 1 : 0,
+                transform: animationStep >= 4 ? 'translateY(0)' : 'translateY(48px)',
+              }}
             >
               EVERY COST PROTECTED.
             </h2>
@@ -247,22 +294,27 @@ export const HeroCinematic: React.FC = () => {
 
           {/* Editorial Subtext */}
           <p
-            className={`text-base sm:text-lg text-limestone max-w-2xl font-normal leading-relaxed mb-8 transition-all duration-700 delay-300 ${
-              animationStep >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className="text-base sm:text-lg text-limestone max-w-2xl font-normal leading-relaxed mb-8 will-change-transform transition-all duration-800"
+            style={{
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+              transitionDelay: '300ms',
+              opacity: animationStep >= 4 ? 1 : 0,
+              transform: animationStep >= 4 ? 'translateY(0)' : 'translateY(24px)',
+            }}
           >
             The construction change management platform that links site instructions, 
             revised CAD drawings, integer-paise unit rates, and client approvals. 
             Eliminating unapproved work leakage across multi-crore infrastructure contracts.
           </p>
 
-          {/* 5. Live Activated Variation Alert Card in Industrial Green & Copper */}
+          {/* 5. Live Activated Variation Alert Card with Tactile Spring Entrance */}
           <div
-            className={`transition-all duration-700 delay-500 mb-8 ${
-              variationActive
-                ? 'opacity-100 translate-y-0 scale-100'
-                : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
-            }`}
+            className="transition-all duration-700 ease-out will-change-transform mb-8"
+            style={{
+              opacity: variationActive ? 1 : 0,
+              transform: variationActive ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
+              pointerEvents: variationActive ? 'auto' : 'none',
+            }}
           >
             <div className="p-4 sm:p-5 rounded-lg bg-industrial/95 border border-copper/60 backdrop-blur-md shadow-elevated max-w-xl">
               <div className="flex items-start justify-between gap-4">
@@ -306,9 +358,12 @@ export const HeroCinematic: React.FC = () => {
 
           {/* Action CTAs */}
           <div
-            className={`flex flex-wrap items-center gap-4 transition-all duration-700 delay-700 ${
-              animationStep >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className="flex flex-wrap items-center gap-4 transition-all duration-700 ease-out will-change-transform"
+            style={{
+              transitionDelay: '450ms',
+              opacity: animationStep >= 4 ? 1 : 0,
+              transform: animationStep >= 4 ? 'translateY(0)' : 'translateY(16px)',
+            }}
           >
             <a href="#blueprint-story">
               <MagneticButton

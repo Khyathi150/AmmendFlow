@@ -99,16 +99,16 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
 
         {/* 5 Exposure Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
-          {buckets.map((b) => {
+          {buckets.map((b, idx) => {
             const Icon = b.icon;
             return (
               <div
                 key={b.id}
-                className="rounded-xl bg-forest border border-olive/40 p-5 shadow-elevated flex flex-col justify-between hover:border-copper/70 transition-all group"
+                className="rounded-xl bg-forest border border-olive/40 p-5 shadow-elevated flex flex-col justify-between hover:border-copper/80 hover:-translate-y-1.5 hover:shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group will-change-transform"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`p-2 rounded-lg border ${b.color}`}>
+                    <span className={`p-2 rounded-lg border transition-transform duration-300 group-hover:scale-105 ${b.color}`}>
                       <Icon className="w-4 h-4" />
                     </span>
                     <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-industrial text-limestone border border-olive/30">

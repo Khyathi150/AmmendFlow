@@ -13,11 +13,14 @@ export const BlueprintStoryScroll: React.FC = () => {
     const container = containerRef.current;
     if (!container) return;
 
+    // Check reduced motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     const st = ScrollTrigger.create({
       trigger: container,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 0.6,
+      scrub: prefersReducedMotion ? false : 0.6,
       onUpdate: (self) => {
         const p = self.progress;
         setScrollProgress(p);
@@ -85,7 +88,7 @@ export const BlueprintStoryScroll: React.FC = () => {
         {/* Background Subtle Industrial CAD Grid */}
         <div className="absolute inset-0 bg-cad-grid-dark opacity-35 pointer-events-none" />
 
-        {/* Top Progress Meter */}
+        {/* Top Progress Meter with Fluid Scrubbing */}
         <div className="absolute top-6 left-6 right-6 flex items-center justify-between text-xs font-mono text-limestone border-b border-olive/30 pb-3 z-30">
           <div className="flex items-center gap-3">
             <span className="text-copper font-bold">SCROLL CHOREOGRAPHY</span>
@@ -97,7 +100,7 @@ export const BlueprintStoryScroll: React.FC = () => {
             <span>SCRUB: {Math.round(scrollProgress * 100)}%</span>
             <div className="w-24 h-1.5 rounded-full bg-forest overflow-hidden border border-olive/40">
               <div
-                className="h-full bg-copper transition-all duration-75"
+                className="h-full bg-copper transition-all duration-100 ease-out"
                 style={{ width: `${scrollProgress * 100}%` }}
               />
             </div>
@@ -106,33 +109,38 @@ export const BlueprintStoryScroll: React.FC = () => {
 
         {/* Left Side: Editorial Storytelling & Stage Narrative in Parchment & Limestone */}
         <div className="w-full lg:w-5/12 z-20 mt-12 lg:mt-0 max-w-xl">
-          {/* Active Stage Indicator */}
+          {/* Active Stage Indicator with Soft Pulse */}
           <div className="font-mono text-xs text-copper tracking-widest uppercase mb-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-copper animate-pulse" />
             <span>{stages[activeStage].eyebrow}</span>
           </div>
 
           {/* Large Editorial Heading in Parchment */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-parchment leading-tight mb-4 transition-all duration-300">
-            {stages[activeStage].title}
-          </h2>
+          <div key={`heading-${activeStage}`} className="animate-in fade-in duration-300">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-parchment leading-tight mb-4">
+              {stages[activeStage].title}
+            </h2>
+          </div>
 
           {/* Status Badge */}
           <div className="mb-6">
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono tracking-wider border font-medium ${stages[activeStage].tagColor}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono tracking-wider border font-medium transition-all duration-300 ${stages[activeStage].tagColor}`}
             >
               {stages[activeStage].tag}
             </span>
           </div>
 
           {/* Stage Narrative Description in Limestone */}
-          <p className="text-sm sm:text-base text-limestone leading-relaxed font-sans mb-8">
+          <p key={`desc-${activeStage}`} className="text-sm sm:text-base text-limestone leading-relaxed font-sans mb-8 animate-in fade-in duration-300">
             {stages[activeStage].desc}
           </p>
 
           {/* Real-time Dynamic Stage Data Card in Forest Charcoal */}
-          <div className="p-4 rounded-lg bg-forest border border-olive/50 backdrop-blur-md shadow-elevated font-mono text-xs">
+          <div
+            key={`data-${activeStage}`}
+            className="p-4 rounded-lg bg-forest border border-olive/50 backdrop-blur-md shadow-elevated font-mono text-xs animate-in fade-in duration-300 will-change-transform"
+          >
             {activeStage === 0 && (
               <div className="space-y-2">
                 <div className="flex justify-between border-b border-olive/20 pb-1.5">
@@ -151,7 +159,7 @@ export const BlueprintStoryScroll: React.FC = () => {
             )}
 
             {activeStage === 1 && (
-              <div className="space-y-2 animate-in fade-in duration-300">
+              <div className="space-y-2">
                 <div className="flex justify-between border-b border-olive/20 pb-1.5">
                   <span className="text-copper font-bold">SOIL BOREHOLE ID</span>
                   <span className="text-parchment font-bold">BH-P14-2026</span>
@@ -168,7 +176,7 @@ export const BlueprintStoryScroll: React.FC = () => {
             )}
 
             {activeStage === 2 && (
-              <div className="space-y-2 animate-in fade-in duration-300">
+              <div className="space-y-2">
                 <div className="flex justify-between border-b border-olive/20 pb-1">
                   <span className="text-limestone/70">M40 CONCRETE (+36 m³)</span>
                   <span className="text-parchment">₹ 15,12,000</span>
@@ -189,7 +197,7 @@ export const BlueprintStoryScroll: React.FC = () => {
             )}
 
             {activeStage === 3 && (
-              <div className="space-y-2 animate-in fade-in duration-300">
+              <div className="space-y-2">
                 <div className="flex justify-between border-b border-olive/20 pb-1.5 text-copper font-bold">
                   <span>CLIENT APPROVAL</span>
                   <span>ACCEPTED (SHA-256 HASH)</span>
@@ -206,12 +214,12 @@ export const BlueprintStoryScroll: React.FC = () => {
             )}
           </div>
 
-          {/* Stepper Dots in Copper & Olive */}
+          {/* Stepper Dots in Copper & Olive with Spring Transition */}
           <div className="flex items-center gap-2 mt-6">
             {stages.map((stg, i) => (
               <div
                 key={stg.num}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full transition-all duration-400 ease-out ${
                   activeStage === i ? 'w-8 bg-copper' : 'w-2 bg-olive/40'
                 }`}
               />
@@ -231,7 +239,7 @@ export const BlueprintStoryScroll: React.FC = () => {
               <div>SCALE: 1:100 METRIC</div>
             </div>
 
-            {/* Dynamic SVG CAD Blueprint in Limestone & Copper */}
+            {/* Dynamic SVG CAD Blueprint in Limestone & Copper with Smooth Transitions */}
             <div className="relative flex-1 flex items-center justify-center my-2">
               <svg viewBox="0 0 500 500" className="w-full h-full max-h-[460px]">
                 {/* Strata Layers */}
@@ -243,7 +251,14 @@ export const BlueprintStoryScroll: React.FC = () => {
 
                 {/* Bedrock / Fractured Zone */}
                 <rect x="20" y="410" width="460" height="80" fill="#151D19" fillOpacity="0.95" />
-                <text x="30" y="425" fill={activeStage >= 1 ? '#BD6847' : '#68745B'} fontSize="8" fontFamily="monospace" fontWeight="bold">
+                <text
+                  x="30" y="425"
+                  fill={activeStage >= 1 ? '#BD6847' : '#68745B'}
+                  fontSize="8"
+                  fontFamily="monospace"
+                  fontWeight="bold"
+                  style={{ transition: 'fill 0.5s ease' }}
+                >
                   {activeStage >= 1 ? '⚠ HARD FRACTURED GRANITE FAULT' : 'HARD SOUND GRANITE BEDROCK'}
                 </text>
 
@@ -266,65 +281,77 @@ export const BlueprintStoryScroll: React.FC = () => {
                 <line x1="370" y1="210" x2="370" y2="350" stroke="#C9B99E" strokeWidth="1" strokeDasharray="2 2" />
                 <text x="380" y="285" fill="#C9B99E" fontSize="8" fontFamily="monospace">BASELINE: -12.0M</text>
 
-                {/* Stage 1: Geotechnical Fault Marker in Copper */}
-                {activeStage >= 1 && (
-                  <g className="animate-in fade-in duration-500">
-                    <path
-                      d="M 60 350 Q 180 335, 270 355 T 440 345"
-                      stroke="#BD6847"
-                      strokeWidth="2.5"
-                      strokeDasharray="4 2"
-                    />
-                    <circle cx="270" cy="355" r="4" fill="#BD6847" className="animate-ping" />
-                    <circle cx="270" cy="355" r="4" fill="#BD6847" />
-                    <text x="280" y="345" fill="#BD6847" fontSize="9" fontFamily="monospace" fontWeight="bold">
-                      FAULT DISCOVERED
-                    </text>
-                  </g>
-                )}
+                {/* Stage 1: Geotechnical Fault Marker in Copper with Fluid Reveal */}
+                <g
+                  style={{
+                    opacity: activeStage >= 1 ? 1 : 0,
+                    transform: activeStage >= 1 ? 'scale(1)' : 'scale(0.97)',
+                    transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  <path
+                    d="M 60 350 Q 180 335, 270 355 T 440 345"
+                    stroke="#BD6847"
+                    strokeWidth="2.5"
+                    strokeDasharray="4 2"
+                  />
+                  <circle cx="270" cy="355" r="4" fill="#BD6847" className="animate-ping" />
+                  <circle cx="270" cy="355" r="4" fill="#BD6847" />
+                  <text x="280" y="345" fill="#BD6847" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                    FAULT DISCOVERED
+                  </text>
+                </g>
 
-                {/* Stage 2 & 3: Extended Socket (+3m down to Y=430 in Oxidised Copper) */}
-                {activeStage >= 2 && (
-                  <g className="animate-in fade-in duration-500">
-                    <line x1="160" y1="350" x2="160" y2="430" stroke="#BD6847" strokeWidth="3.5" />
-                    <line x1="220" y1="350" x2="220" y2="430" stroke="#BD6847" strokeWidth="3.5" />
-                    <line x1="280" y1="350" x2="280" y2="430" stroke="#BD6847" strokeWidth="3.5" />
-                    <line x1="340" y1="350" x2="340" y2="430" stroke="#BD6847" strokeWidth="3.5" />
+                {/* Stage 2 & 3: Extended Socket (+3m down to Y=430 in Oxidised Copper) with Smooth Easing */}
+                <g
+                  style={{
+                    opacity: activeStage >= 2 ? 1 : 0,
+                    transform: activeStage >= 2 ? 'translateY(0)' : 'translateY(-8px)',
+                    transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  <line x1="160" y1="350" x2="160" y2="430" stroke="#BD6847" strokeWidth="3.5" />
+                  <line x1="220" y1="350" x2="220" y2="430" stroke="#BD6847" strokeWidth="3.5" />
+                  <line x1="280" y1="350" x2="280" y2="430" stroke="#BD6847" strokeWidth="3.5" />
+                  <line x1="340" y1="350" x2="340" y2="430" stroke="#BD6847" strokeWidth="3.5" />
 
-                    {/* Extended Embedment Base */}
-                    <line x1="140" y1="430" x2="360" y2="430" stroke="#BD6847" strokeWidth="2" />
-                    <text x="370" y="433" fill="#BD6847" fontSize="9" fontFamily="monospace" fontWeight="bold">
-                      REVISED EMBEDMENT: -15.0M (+3.0M)
-                    </text>
+                  {/* Extended Embedment Base */}
+                  <line x1="140" y1="430" x2="360" y2="430" stroke="#BD6847" strokeWidth="2" />
+                  <text x="370" y="433" fill="#BD6847" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                    REVISED EMBEDMENT: -15.0M (+3.0M)
+                  </text>
 
-                    {/* Copper Revision Cloud Box */}
-                    <rect
-                      x="130" y="335" width="240" height="105"
-                      fill="#BD6847" fillOpacity="0.12"
-                      stroke="#BD6847" strokeWidth="1.5" strokeDasharray="4 2"
-                      rx="4"
-                    />
-                    <text x="140" y="325" fill="#BD6847" fontSize="8" fontFamily="monospace" fontWeight="bold">
-                      REVISION CLOUD: CO-PRJ-001
-                    </text>
-                  </g>
-                )}
+                  {/* Copper Revision Cloud Box */}
+                  <rect
+                    x="130" y="335" width="240" height="105"
+                    fill="#BD6847" fillOpacity="0.12"
+                    stroke="#BD6847" strokeWidth="1.5" strokeDasharray="4 2"
+                    rx="4"
+                  />
+                  <text x="140" y="325" fill="#BD6847" fontSize="8" fontFamily="monospace" fontWeight="bold">
+                    REVISION CLOUD: CO-PRJ-001
+                  </text>
+                </g>
 
-                {/* Stage 3: Approval Seal Stamp */}
-                {activeStage >= 3 && (
-                  <g className="animate-in zoom-in-95 duration-500">
-                    <rect x="290" y="50" width="160" height="70" rx="4" fill="#151D19" stroke="#C9B99E" strokeWidth="2" />
-                    <text x="305" y="75" fill="#C9B99E" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                      ✓ APPROVED FOR BILLING
-                    </text>
-                    <text x="305" y="92" fill="#E5DCCB" fontSize="8" fontFamily="monospace">
-                      CLIENT: PRESTIGE COMMERCIAL
-                    </text>
-                    <text x="305" y="105" fill="#BD6847" fontSize="7" fontFamily="monospace" fontWeight="bold">
-                      HASH: 8F3C2A91D... VERIFIED
-                    </text>
-                  </g>
-                )}
+                {/* Stage 3: Approval Seal Stamp with Scale-In Spring */}
+                <g
+                  style={{
+                    opacity: activeStage >= 3 ? 1 : 0,
+                    transform: activeStage >= 3 ? 'scale(1)' : 'scale(0.92)',
+                    transition: 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  <rect x="290" y="50" width="160" height="70" rx="4" fill="#151D19" stroke="#C9B99E" strokeWidth="2" />
+                  <text x="305" y="75" fill="#C9B99E" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                    ✓ APPROVED FOR BILLING
+                  </text>
+                  <text x="305" y="92" fill="#E5DCCB" fontSize="8" fontFamily="monospace">
+                    CLIENT: PRESTIGE COMMERCIAL
+                  </text>
+                  <text x="305" y="105" fill="#BD6847" fontSize="7" fontFamily="monospace" fontWeight="bold">
+                    HASH: 8F3C2A91D... VERIFIED
+                  </text>
+                </g>
               </svg>
             </div>
 
