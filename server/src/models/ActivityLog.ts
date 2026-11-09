@@ -36,3 +36,4 @@ const activityLogSchema = new Schema<IActivityLog>(
 );
 
 export const ActivityLog = mongoose.model<IActivityLog>('ActivityLog', activityLogSchema);
+

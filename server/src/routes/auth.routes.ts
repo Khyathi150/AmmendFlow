@@ -17,3 +17,4 @@ router.get('/me', requireAuth, getMe);
 router.post('/switch-org', requireAuth, switchOrganization);
 
 export default router;
+

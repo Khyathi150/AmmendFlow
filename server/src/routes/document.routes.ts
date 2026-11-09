@@ -23,3 +23,4 @@ router.post('/:documentId/annotations', createAnnotation);
 router.delete('/annotations/:id', deleteAnnotation);
 
 export default router;
+

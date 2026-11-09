@@ -53,3 +53,4 @@ boqItemSchema.index({ project: 1, itemCode: 1 }, { unique: true });
 boqItemSchema.index({ project: 1, category: 1 });
 
 export const BOQItem = mongoose.model<IBOQItem>('BOQItem', boqItemSchema);
+

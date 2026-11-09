@@ -302,3 +302,4 @@ export async function switchOrganization(req: Request, res: Response): Promise<v
     sendError(res, 'SWITCH_FAILED', 'Failed to switch organization workspace', 500);
   }
 }
+

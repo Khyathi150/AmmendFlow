@@ -262,3 +262,4 @@ export interface FinancialExposureSummary {
   invoicedReceivablesPaise: number;
   realisedCashflowPaise: number;
 }
+

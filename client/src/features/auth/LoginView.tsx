@@ -24,7 +24,7 @@ export const LoginView: React.FC = () => {
 
     try {
       await login({ email, password });
-      navigate('/');
+      navigate('/overview');
     } catch (err: any) {
       // Error handled by store
     }
@@ -167,3 +167,4 @@ export const LoginView: React.FC = () => {
     </div>
   );
 };
+

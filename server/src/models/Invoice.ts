@@ -52,3 +52,4 @@ invoiceSchema.index({ project: 1, invoiceNumber: 1 }, { unique: true });
 invoiceSchema.index({ organization: 1, status: 1 });
 
 export const Invoice = mongoose.model<IInvoice>('Invoice', invoiceSchema);
+

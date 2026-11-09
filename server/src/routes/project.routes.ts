@@ -18,3 +18,4 @@ router.post('/', requireRole(['owner', 'admin', 'project_manager']), createProje
 router.patch('/:id', requireRole(['owner', 'admin', 'project_manager']), updateProject);
 
 export default router;
+

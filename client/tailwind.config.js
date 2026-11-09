@@ -35,6 +35,32 @@ export default {
           muted: '#8F9CA7',
           inverted: '#FFFFFF',
         },
+        charcoal: {
+          950: '#070C0E',
+          900: '#0B1317',
+          800: '#121E24',
+          700: '#172B3A',
+          600: '#1E3648',
+        },
+        concrete: {
+          DEFAULT: '#2A3F4D',
+          dark: '#1E2D36',
+          light: '#3D4F5C',
+          muted: '#8A99A4',
+          paper: '#E3E7E9',
+        },
+        safety: {
+          DEFAULT: '#E05A34',
+          hover: '#C84D29',
+          light: '#FCECE8',
+          border: '#F8BBAA',
+        },
+        blueprint: {
+          DEFAULT: '#26A69A',
+          cyan: '#38BDF8',
+          line: 'rgba(56, 189, 248, 0.4)',
+          glow: 'rgba(38, 166, 154, 0.25)',
+        },
         status: {
           success: {
             DEFAULT: '#2E7D32',
@@ -60,6 +86,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
       },
       boxShadow: {
         'subtle': '0 1px 3px 0 rgba(23, 43, 58, 0.05), 0 1px 2px 0 rgba(23, 43, 58, 0.03)',

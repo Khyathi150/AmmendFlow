@@ -56,3 +56,4 @@ export const OrganizationMember = mongoose.model<IOrganizationMember>(
   'OrganizationMember',
   organizationMemberSchema
 );
+

@@ -73,3 +73,4 @@ export async function getVariationRegister(req: Request, res: Response): Promise
     sendError(res, 'REPORT_FAILED', error.message || 'Failed to generate variation register', 500);
   }
 }
+

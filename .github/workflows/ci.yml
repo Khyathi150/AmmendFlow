@@ -1,0 +1,53 @@
+name: AmendFlow Continuous Integration
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  backend-test:
+    name: Backend Tests & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Server Dependencies
+        run: cd server && npm ci
+
+      - name: Compile Server TypeScript
+        run: cd server && npm run build
+
+      - name: Run Server Automated Tests
+        run: cd server && npm test
+
+  frontend-build:
+    name: Frontend Verification & Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Client Dependencies
+        run: cd client && npm ci
+
+      - name: Compile & Build Frontend Bundle
+        run: cd client && npm run build

@@ -70,3 +70,4 @@ projectSchema.index({ organization: 1, code: 1 }, { unique: true });
 projectSchema.index({ organization: 1, status: 1 });
 
 export const Project = mongoose.model<IProject>('Project', projectSchema);
+

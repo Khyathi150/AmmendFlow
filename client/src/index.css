@@ -27,3 +27,45 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #A0AEB7;
 }
+
+/* Architectural Grid & Technical Utilities */
+.bg-cad-grid-dark {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+.bg-cad-grid-light {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(23, 43, 58, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(23, 43, 58, 0.04) 1px, transparent 1px);
+}
+
+.bg-cad-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* SVG stroke drawing utility */
+.svg-draw-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.svg-drawn {
+  stroke-dashoffset: 0 !important;
+}
+
+/* Clip path masks */
+.clip-text-reveal {
+  clip-path: inset(0 0 0 0);
+}
+
+.clip-text-hidden {
+  clip-path: inset(100% 0 0 0);
+}
+
+

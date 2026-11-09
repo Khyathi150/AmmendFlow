@@ -252,3 +252,4 @@ export const BOQManagementView: React.FC = () => {
     </div>
   );
 };
+

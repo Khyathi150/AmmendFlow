@@ -586,3 +586,4 @@ export const FinancialExposureView: React.FC = () => {
     </div>
   );
 };
+

@@ -142,3 +142,4 @@ AmendFlow employs a dual-tier permission hierarchy: **Organization Level** (Tena
 - **Performance:** Sub-100ms API response time on indexed queries; client-side optimistic caching via TanStack Query.
 - **Reliability:** Fallback memory database server for instant zero-dependency execution in testing and local dev; production-ready connection to MongoDB Atlas.
 - **Design Authenticity:** High-density, restrained enterprise design language using custom slate/teal tokens (`#183B45`, `#357B75`, `#F5F6F4`), crisp typography, and zero generic template artifacts.
+

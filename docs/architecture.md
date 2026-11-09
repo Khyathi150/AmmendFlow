@@ -264,3 +264,4 @@ Total Contract Scope = Original Baseline BOQ Total + Approved Variations
 2. **Organization Context Injection:** Every authenticated request executes `requireAuth` followed by `tenantScope`. Controllers query with `{ organization: req.orgId, ... }`, preventing multi-tenant data leaks.
 3. **Payload Sanitization & Zod Enforcement:** Inbound requests are validated against strict Zod schemas with `.strip()` to reject unknown malicious fields.
 4. **Rate Limiting & Headers:** Helmet configures secure HTTP response headers (CSP, HSTS, X-Frame-Options); express-rate-limit prevents brute force on auth endpoints.
+

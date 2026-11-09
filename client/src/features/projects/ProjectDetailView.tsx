@@ -749,3 +749,4 @@ export const ProjectDetailView: React.FC = () => {
     </div>
   );
 };
+

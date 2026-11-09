@@ -295,3 +295,4 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
     sendError(res, 'UPDATE_PROJECT_FAILED', error.message || 'Failed to update project', 500);
   }
 }
+

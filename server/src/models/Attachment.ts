@@ -62,3 +62,4 @@ const attachmentSchema = new Schema<IAttachment>(
 );
 
 export const Attachment = mongoose.model<IAttachment>('Attachment', attachmentSchema);
+

@@ -130,3 +130,4 @@ Tests cover:
 - State machine role enforcement.
 - Mandatory justification check for unapproved work execution.
 - Overpayment prevention on variation invoices.
+

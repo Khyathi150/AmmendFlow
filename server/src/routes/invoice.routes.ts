@@ -18,3 +18,4 @@ router.post('/', requireRole(['owner', 'admin', 'finance_officer']), createInvoi
 router.post('/:id/payments', requireRole(['owner', 'admin', 'finance_officer']), recordPayment);
 
 export default router;
+

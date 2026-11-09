@@ -22,3 +22,4 @@ export const AppShell: React.FC<AppShellProps> = ({ onQuickAction }) => {
     </div>
   );
 };
+

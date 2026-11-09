@@ -214,13 +214,12 @@ export const NewChangeOrderView: React.FC = () => {
           return (
             <div
               key={s.number}
-              className={`p-2.5 rounded-lg border text-center transition-all ${
-                isCurrent
+              className={`p-2.5 rounded-lg border text-center transition-all ${isCurrent
                   ? 'border-secondary bg-secondary-light text-secondary font-bold shadow-sm'
                   : isDone
-                  ? 'border-border bg-surface text-text-primary'
-                  : 'border-border/60 bg-surface-subtle text-text-muted'
-              }`}
+                    ? 'border-border bg-surface text-text-primary'
+                    : 'border-border/60 bg-surface-subtle text-text-muted'
+                }`}
             >
               <div className="text-[10px] uppercase tracking-wider font-semibold">
                 Step {s.number}
@@ -716,3 +715,4 @@ export const NewChangeOrderView: React.FC = () => {
     </div>
   );
 };
+

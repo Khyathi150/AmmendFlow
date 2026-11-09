@@ -19,7 +19,7 @@ export const Sidebar: React.FC = () => {
   const { user, activeOrganization, logout } = useAuthStore();
 
   const navItems = [
-    { label: 'Overview', to: '/', icon: LayoutDashboard },
+    { label: 'Overview', to: '/overview', icon: LayoutDashboard },
     { label: 'Projects', to: '/projects', icon: Building2 },
     { label: 'Change Orders', to: '/change-orders', icon: GitPullRequest },
     { label: 'BOQ Management', to: '/boq', icon: FileSpreadsheet },
@@ -122,3 +122,4 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
+

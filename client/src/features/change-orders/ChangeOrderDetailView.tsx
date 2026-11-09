@@ -242,13 +242,12 @@ export const ChangeOrderDetailView: React.FC = () => {
             return (
               <div key={step} className="flex items-center shrink-0">
                 <div
-                  className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all whitespace-nowrap flex items-center gap-1 ${
-                    isCurrent
+                  className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all whitespace-nowrap flex items-center gap-1 ${isCurrent
                       ? 'bg-secondary text-white shadow-sm'
                       : isPassed
-                      ? 'bg-secondary-light text-secondary border border-secondary/20'
-                      : 'bg-surface-subtle text-text-muted border border-border/60'
-                  }`}
+                        ? 'bg-secondary-light text-secondary border border-secondary/20'
+                        : 'bg-surface-subtle text-text-muted border border-border/60'
+                    }`}
                 >
                   {isPassed && <CheckCircle2 className="w-3 h-3" />}
                   <span>{step}</span>
@@ -272,15 +271,15 @@ export const ChangeOrderDetailView: React.FC = () => {
           {['Submitted', 'Technical Review', 'Commercial Review', 'Internal Approval', 'Client Approval'].includes(
             changeOrder.status
           ) && (
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={ShieldCheck}
-              onClick={() => setIsApprovalModalOpen(true)}
-            >
-              Review & Sign-Off ({changeOrder.status})
-            </Button>
-          )}
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={ShieldCheck}
+                onClick={() => setIsApprovalModalOpen(true)}
+              >
+                Review & Sign-Off ({changeOrder.status})
+              </Button>
+            )}
 
           {changeOrder.status === 'Draft' && (
             <Button

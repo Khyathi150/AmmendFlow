@@ -12,3 +12,4 @@ export const env = {
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   UPLOAD_DIR: process.env.UPLOAD_DIR || path.resolve(process.cwd(), 'uploads'),
 };
+

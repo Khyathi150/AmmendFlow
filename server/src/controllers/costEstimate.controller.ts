@@ -132,3 +132,4 @@ export async function getEstimates(req: Request, res: Response): Promise<void> {
     sendError(res, 'FETCH_ESTIMATES_FAILED', error.message || 'Failed to fetch estimates', 500);
   }
 }
+

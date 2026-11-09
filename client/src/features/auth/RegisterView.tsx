@@ -39,7 +39,7 @@ export const RegisterView: React.FC = () => {
 
     try {
       await register(formData);
-      navigate('/');
+      navigate('/overview');
     } catch (err) {
       // Error in store
     }
@@ -152,3 +152,4 @@ export const RegisterView: React.FC = () => {
     </div>
   );
 };
+

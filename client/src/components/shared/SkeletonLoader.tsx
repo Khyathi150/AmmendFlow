@@ -32,3 +32,4 @@ export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({ r
     </div>
   );
 };
+

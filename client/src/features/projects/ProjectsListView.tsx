@@ -428,3 +428,4 @@ export const ProjectsListView: React.FC = () => {
     </div>
   );
 };
+

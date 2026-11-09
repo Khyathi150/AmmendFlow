@@ -46,3 +46,4 @@ export async function disconnectDB(): Promise<void> {
   }
   console.log('[Database] Disconnected from MongoDB.');
 }
+

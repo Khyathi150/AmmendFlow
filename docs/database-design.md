@@ -323,3 +323,4 @@ Append-only tamper-evident audit history.
 | `metadata` | Object | Prior & new values, diff payload |
 | `ipAddress` | String | Performer IP address |
 | `createdAt` | Date | Immutable event timestamp |
+

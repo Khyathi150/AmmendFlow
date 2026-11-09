@@ -5,6 +5,7 @@ import { useAuthStore } from './store/authStore';
 import { AppShell } from './components/layout/AppShell';
 import { LoginView } from './features/auth/LoginView';
 import { RegisterView } from './features/auth/RegisterView';
+import { LandingPageView } from './features/landing/LandingPageView';
 import { OverviewView } from './features/dashboard/OverviewView';
 import { ProjectsListView } from './features/projects/ProjectsListView';
 import { ProjectDetailView } from './features/projects/ProjectDetailView';
@@ -59,29 +60,34 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          {/* Public Cinematic Landing Showcase */}
+          <Route path="/" element={<LandingPageView />} />
+          <Route path="/landing" element={<LandingPageView />} />
+
+          {/* Authentication Pages */}
           <Route path="/login" element={<LoginView />} />
           <Route path="/register" element={<RegisterView />} />
 
+          {/* Protected Application Workspace Shell */}
           <Route
-            path="/"
             element={
               <ProtectedRoute>
                 <AppShell />
               </ProtectedRoute>
             }
           >
-            <Route index element={<OverviewView />} />
-            <Route path="projects" element={<ProjectsListView />} />
-            <Route path="projects/:id" element={<ProjectDetailView />} />
-            <Route path="boq" element={<BOQManagementView />} />
-            <Route path="change-orders" element={<ChangeOrdersListView />} />
-            <Route path="change-orders/new" element={<NewChangeOrderView />} />
-            <Route path="change-orders/:id" element={<ChangeOrderDetailView />} />
-            <Route path="financial-exposure" element={<FinancialExposureView />} />
-            <Route path="invoices" element={<InvoicesView />} />
-            <Route path="documents" element={<DocumentsView />} />
-            <Route path="reports" element={<ReportsView />} />
-            <Route path="settings" element={<SettingsView />} />
+            <Route path="/overview" element={<OverviewView />} />
+            <Route path="/projects" element={<ProjectsListView />} />
+            <Route path="/projects/:id" element={<ProjectDetailView />} />
+            <Route path="/boq" element={<BOQManagementView />} />
+            <Route path="/change-orders" element={<ChangeOrdersListView />} />
+            <Route path="/change-orders/new" element={<NewChangeOrderView />} />
+            <Route path="/change-orders/:id" element={<ChangeOrderDetailView />} />
+            <Route path="/financial-exposure" element={<FinancialExposureView />} />
+            <Route path="/invoices" element={<InvoicesView />} />
+            <Route path="/documents" element={<DocumentsView />} />
+            <Route path="/reports" element={<ReportsView />} />
+            <Route path="/settings" element={<SettingsView />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

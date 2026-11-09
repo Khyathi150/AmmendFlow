@@ -306,3 +306,4 @@ export async function recordPayment(req: Request, res: Response): Promise<void> 
     sendError(res, 'RECORD_PAYMENT_FAILED', error.message || 'Failed to record payment', 500);
   }
 }
+

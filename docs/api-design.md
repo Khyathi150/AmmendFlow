@@ -281,3 +281,4 @@ Returns project-specific financial exposure numbers with underlying change order
 - `GET /api/reports/variation-register` — Detailed variation register table.
 - `GET /api/reports/financial-exposure` — Executive financial exposure report.
 - `GET /api/reports/export?type=variation-register&format=csv` — Direct CSV download with proper column formats.
+

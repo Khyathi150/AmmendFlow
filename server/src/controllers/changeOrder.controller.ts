@@ -455,3 +455,4 @@ export async function completeWork(req: Request, res: Response): Promise<void> {
     sendError(res, 'COMPLETE_WORK_FAILED', error.message || 'Failed to complete work', 500);
   }
 }
+

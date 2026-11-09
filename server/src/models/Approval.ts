@@ -43,3 +43,4 @@ const approvalSchema = new Schema<IApproval>(
 );
 
 export const Approval = mongoose.model<IApproval>('Approval', approvalSchema);
+

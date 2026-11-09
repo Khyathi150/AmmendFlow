@@ -143,3 +143,4 @@ export function rupeesToPaise(rupees: number | string): number {
 export function paiseToRupees(paise: number): number {
   return (Math.round(paise || 0)) / 100;
 }
+

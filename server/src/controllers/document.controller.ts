@@ -175,3 +175,4 @@ export async function deleteAnnotation(req: Request, res: Response): Promise<voi
     sendError(res, 'DELETE_ANNOTATION_FAILED', error.message || 'Failed to delete annotation', 500);
   }
 }
+

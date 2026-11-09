@@ -47,3 +47,4 @@ export const DrawingAnnotation = mongoose.model<IDrawingAnnotation>(
   'DrawingAnnotation',
   drawingAnnotationSchema
 );
+

@@ -76,3 +76,4 @@ const costEstimateSchema = new Schema<ICostEstimate>(
 costEstimateSchema.index({ changeOrder: 1, version: 1 }, { unique: true });
 
 export const CostEstimate = mongoose.model<ICostEstimate>('CostEstimate', costEstimateSchema);
+
