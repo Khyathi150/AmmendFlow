@@ -5,7 +5,7 @@ interface MagneticButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
-  variant?: 'primary' | 'safety' | 'outline' | 'dark';
+  variant?: 'copper' | 'industrial' | 'limestone' | 'outline' | 'dark' | 'safety' | 'primary';
   strength?: number;
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
@@ -15,7 +15,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   children,
   onClick,
   className = '',
-  variant = 'primary',
+  variant = 'copper',
   strength = 24,
   type = 'button',
   disabled = false,
@@ -42,14 +42,20 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
   };
 
   const variantStyles = {
-    primary:
-      'bg-primary text-white hover:bg-primary-hover border border-primary-hover shadow-subtle',
+    copper:
+      'bg-copper text-parchment hover:bg-copper-hover border border-copper/80 shadow-copper font-semibold',
     safety:
-      'bg-safety text-white hover:bg-safety-hover border border-safety-hover shadow-subtle',
+      'bg-copper text-parchment hover:bg-copper-hover border border-copper/80 shadow-copper font-semibold',
+    industrial:
+      'bg-industrial text-parchment hover:bg-industrial-light border border-olive/40 shadow-subtle',
+    primary:
+      'bg-industrial text-parchment hover:bg-industrial-light border border-olive/40 shadow-subtle',
+    limestone:
+      'bg-limestone text-forest hover:bg-limestone-light border border-limestone-dark shadow-subtle font-semibold',
     outline:
-      'bg-transparent text-text-primary hover:bg-white/80 border border-border-dark',
+      'bg-forest/60 text-parchment hover:bg-industrial/80 border border-olive/50 hover:border-limestone/70 backdrop-blur-sm',
     dark:
-      'bg-charcoal-800 text-white hover:bg-charcoal-700 border border-white/10 hover:border-white/20',
+      'bg-forest text-parchment hover:bg-forest-surface border border-olive/40 hover:border-copper/60',
   };
 
   return (
@@ -63,7 +69,7 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
       animate={{ x: position.x, y: position.y }}
       transition={{ type: 'spring', stiffness: 220, damping: 18, mass: 0.2 }}
       whileTap={{ scale: 0.96 }}
-      className={`relative inline-flex items-center justify-center font-medium transition-colors cursor-pointer select-none overflow-hidden rounded-md ${variantStyles[variant]} ${className}`}
+      className={`relative inline-flex items-center justify-center font-medium transition-colors cursor-pointer select-none overflow-hidden rounded-md ${variantStyles[variant] || variantStyles.copper} ${className}`}
       data-cursor-target="true"
     >
       <motion.span
@@ -76,4 +82,3 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
     </motion.button>
   );
 };
-

@@ -7,8 +7,7 @@ import {
   HardHat, 
   CheckCircle, 
   Receipt, 
-  Banknote,
-  ArrowRight
+  Banknote
 } from 'lucide-react';
 
 interface PipelineStep {
@@ -100,21 +99,21 @@ export const LifecyclePipelineFlow: React.FC = () => {
   ];
 
   return (
-    <section id="pipeline-flow" className="py-24 bg-background text-text-primary relative border-t border-border">
-      {/* Light Technical CAD Grid */}
-      <div className="absolute inset-0 bg-cad-grid-light opacity-50 pointer-events-none" />
+    <section id="pipeline-flow" className="py-24 bg-limestone text-forest relative border-t border-b border-limestone-dark">
+      {/* Limestone Subtle CAD Drafting Grid */}
+      <div className="absolute inset-0 bg-cad-grid-limestone opacity-60 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
+        {/* Section Header with High Contrast Deep Forest Text */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-secondary-light border border-secondary/20 text-secondary text-xs font-mono tracking-widest uppercase mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-forest text-parchment border border-olive text-xs font-mono tracking-widest uppercase mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-copper" />
             <span>THE UNIFIED VARIATION LIFECYCLE</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-text-primary">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-forest">
             EVERY STEP AUDITED. ZERO REVENUE LEAKAGE.
           </h2>
-          <p className="text-sm sm:text-base text-text-secondary mt-2">
+          <p className="text-sm sm:text-base text-industrial font-medium mt-2">
             A single connected journey from unpredictable sub-surface site discovery to reconciled bank deposit.
           </p>
         </div>
@@ -130,37 +129,37 @@ export const LifecyclePipelineFlow: React.FC = () => {
                 onClick={() => setActiveStep(idx)}
                 className={`text-left p-3 rounded-lg border transition-all cursor-pointer relative group flex flex-col justify-between h-36 ${
                   isSelected
-                    ? 'bg-primary text-white border-primary shadow-elevated scale-105 z-20'
-                    : 'bg-surface hover:bg-surface-subtle border-border text-text-secondary hover:text-text-primary'
+                    ? 'bg-forest text-parchment border-copper shadow-elevated scale-105 z-20'
+                    : 'bg-[#DCD0BB] hover:bg-parchment-light border-limestone-dark/60 text-forest'
                 }`}
               >
                 {/* Step Number & Line */}
                 <div className="flex items-center justify-between w-full">
                   <span
                     className={`font-mono text-[10px] tracking-wider font-bold ${
-                      isSelected ? 'text-secondary-light' : 'text-text-muted'
+                      isSelected ? 'text-copper' : 'text-olive'
                     }`}
                   >
                     STEP {st.number}
                   </span>
-                  <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-text-muted group-hover:text-primary'}`} />
+                  <Icon className={`w-4 h-4 ${isSelected ? 'text-copper' : 'text-forest/70 group-hover:text-copper'}`} />
                 </div>
 
                 {/* Title */}
                 <div>
-                  <h4 className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-text-primary'}`}>
+                  <h4 className={`text-xs font-bold leading-tight ${isSelected ? 'text-parchment' : 'text-forest'}`}>
                     {st.title}
                   </h4>
-                  <p className={`text-[10px] mt-0.5 truncate ${isSelected ? 'text-white/70' : 'text-text-muted'}`}>
+                  <p className={`text-[10px] mt-0.5 truncate ${isSelected ? 'text-limestone' : 'text-industrial'}`}>
                     {st.role}
                   </p>
                 </div>
 
                 {/* Progress bar pill */}
-                <div className="w-full h-1 rounded-full bg-black/10 overflow-hidden mt-1">
+                <div className="w-full h-1 rounded-full bg-black/15 overflow-hidden mt-1">
                   <div
                     className={`h-full ${
-                      isSelected ? 'bg-secondary' : idx < activeStep ? 'bg-emerald-500' : 'bg-transparent'
+                      isSelected ? 'bg-copper' : idx < activeStep ? 'bg-olive' : 'bg-transparent'
                     }`}
                   />
                 </div>
@@ -169,43 +168,43 @@ export const LifecyclePipelineFlow: React.FC = () => {
           })}
         </div>
 
-        {/* Active Stage Detailed Audit Dossier Card */}
-        <div className="rounded-xl bg-surface border border-border shadow-elevated p-6 sm:p-8 max-w-4xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 mb-6 gap-2">
+        {/* Active Stage Detailed Audit Dossier Card in Deep Forest Charcoal */}
+        <div className="rounded-xl bg-forest text-parchment border border-olive/60 shadow-2xl p-6 sm:p-8 max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-olive/30 pb-4 mb-6 gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-mono font-bold text-base shadow-sm">
+              <div className="w-10 h-10 rounded-lg bg-copper text-parchment flex items-center justify-center font-mono font-bold text-base shadow-copper">
                 {steps[activeStep].number}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-text-primary">
+                <h3 className="text-xl font-bold text-parchment">
                   {steps[activeStep].title} — Governance Specifications
                 </h3>
-                <p className="text-xs text-text-secondary font-mono">
+                <p className="text-xs text-limestone font-mono">
                   ACTOR ROLE: {steps[activeStep].role.toUpperCase()}
                 </p>
               </div>
             </div>
 
-            <span className="font-mono text-xs px-2.5 py-1 rounded bg-secondary-light text-secondary border border-secondary/20 font-semibold self-start sm:self-auto">
+            <span className="font-mono text-xs px-2.5 py-1 rounded bg-industrial text-copper border border-copper/40 font-semibold self-start sm:self-auto">
               DATA ARTIFACT: {steps[activeStep].dataArtifact}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
-              <span className="font-mono text-[10px] text-text-muted uppercase tracking-wider block mb-1">
+              <span className="font-mono text-[10px] text-limestone uppercase tracking-wider block mb-1">
                 COMMERCIAL GOVERNANCE RULE
               </span>
-              <p className="text-text-primary font-medium leading-relaxed">
+              <p className="text-parchment font-medium leading-relaxed">
                 {steps[activeStep].governanceRule}
               </p>
             </div>
 
             <div>
-              <span className="font-mono text-[10px] text-text-muted uppercase tracking-wider block mb-1">
+              <span className="font-mono text-[10px] text-limestone uppercase tracking-wider block mb-1">
                 SYSTEM SAFEGUARDS
               </span>
-              <ul className="text-text-secondary text-xs space-y-1.5 list-disc list-inside">
+              <ul className="text-limestone text-xs space-y-1.5 list-disc list-inside">
                 <li>Automated audit logging in append-only Activity Ledger</li>
                 <li>Minor units (paise) integer precision without floating drift</li>
                 <li>Role-based access control with tenant isolation</li>
@@ -213,22 +212,22 @@ export const LifecyclePipelineFlow: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-xs">
-            <span className="font-mono text-text-muted">
+          <div className="mt-6 pt-4 border-t border-olive/30 flex items-center justify-between text-xs">
+            <span className="font-mono text-limestone">
               NORTHSTAR INFRASTRUCTURE WORKFLOW SPECIFICATION
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
                 disabled={activeStep === 0}
-                className="px-3 py-1 rounded border border-border disabled:opacity-30 hover:bg-surface-subtle"
+                className="px-3 py-1 rounded border border-olive/40 disabled:opacity-30 hover:bg-industrial text-parchment"
               >
                 Previous Step
               </button>
               <button
                 onClick={() => setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))}
                 disabled={activeStep === steps.length - 1}
-                className="px-3 py-1 rounded bg-primary text-white disabled:opacity-30 hover:bg-primary-hover"
+                className="px-3 py-1 rounded bg-copper text-parchment disabled:opacity-30 hover:bg-copper-hover font-semibold"
               >
                 Next Step
               </button>
@@ -239,4 +238,3 @@ export const LifecyclePipelineFlow: React.FC = () => {
     </section>
   );
 };
-

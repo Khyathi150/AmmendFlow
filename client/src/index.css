@@ -7,44 +7,44 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-text-primary antialiased;
+    @apply bg-forest text-parchment antialiased selection:bg-copper selection:text-forest-dark;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom subtle scrollbars for dense enterprise data views */
+/* Custom subtle scrollbars for industrial luxury aesthetic */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #151D19;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CFD6D9;
+  background: #68745B;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #A0AEB7;
+  background: #BD6847;
 }
 
 /* Architectural Grid & Technical Utilities */
 .bg-cad-grid-dark {
   background-size: 32px 32px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(104, 116, 91, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(104, 116, 91, 0.15) 1px, transparent 1px);
 }
 
-.bg-cad-grid-light {
+.bg-cad-grid-limestone {
   background-size: 32px 32px;
   background-image: 
-    linear-gradient(to right, rgba(23, 43, 58, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(23, 43, 58, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(40, 54, 46, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(40, 54, 46, 0.12) 1px, transparent 1px);
 }
 
 .bg-cad-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(201, 185, 158, 0.2) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -67,5 +67,3 @@
 .clip-text-hidden {
   clip-path: inset(100% 0 0 0);
 }
-
-

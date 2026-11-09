@@ -14,7 +14,7 @@ export const LandingPageView: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-charcoal-950 text-white font-sans selection:bg-safety selection:text-white relative">
+    <div className="min-h-screen bg-forest text-parchment font-sans selection:bg-copper selection:text-forest relative">
       {/* Precision Surveyor Architectural Cursor */}
       <ArchitecturalCursor />
 

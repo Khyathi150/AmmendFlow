@@ -5,7 +5,6 @@ import {
   FileText, 
   Receipt, 
   CheckCircle2, 
-  TrendingUp, 
   ArrowRight,
   Info
 } from 'lucide-react';
@@ -21,7 +20,7 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
       compact: '₹ 1.85 Cr',
       subtitle: 'Proposed variations under review',
       status: 'In Review',
-      color: 'border-amber-400 bg-amber-500/10 text-amber-500',
+      color: 'border-olive/50 bg-olive/15 text-limestone',
       icon: Clock,
       desc: 'Submitted claims undergoing technical or commercial determination. Not yet approved for work or billing.',
     },
@@ -32,7 +31,7 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
       compact: '₹ 25.00 L',
       subtitle: 'Physical work executing before sign-off',
       status: 'High Risk',
-      color: 'border-safety bg-safety/10 text-safety',
+      color: 'border-copper bg-copper/15 text-copper font-bold',
       icon: ShieldAlert,
       desc: 'Work authorized early under urgent site conditions without client sign-off. Requires documented PM justification.',
     },
@@ -43,7 +42,7 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
       compact: '₹ 45.00 L',
       subtitle: 'Formally signed variations ready to invoice',
       status: 'Ready to Bill',
-      color: 'border-blue-500 bg-blue-500/10 text-blue-500',
+      color: 'border-olive bg-olive/20 text-parchment',
       icon: FileText,
       desc: 'Client-approved scope modifications with verified unit rates awaiting next billing cycle tax invoice issuance.',
     },
@@ -54,7 +53,7 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
       compact: '₹ 1.50 Cr',
       subtitle: 'Tax invoices issued with balance due',
       status: 'Outstanding',
-      color: 'border-purple-500 bg-purple-500/10 text-purple-500',
+      color: 'border-limestone/50 bg-limestone/10 text-limestone',
       icon: Receipt,
       desc: 'Invoices issued to client accounts departments with outstanding contractual payment milestones.',
     },
@@ -65,35 +64,35 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
       compact: '₹ 8.40 Cr',
       subtitle: 'Reconciled bank collections',
       status: 'Secured Cash',
-      color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500',
+      color: 'border-copper bg-copper/25 text-parchment font-bold',
       icon: CheckCircle2,
       desc: 'Fully deposited and reconciled variation payments safely banked into contractor accounts. Revenue leakage: 0%.',
     },
   ];
 
   return (
-    <section id="exposure-matrix" className="py-24 bg-charcoal-950 text-white relative border-t border-white/10">
+    <section id="exposure-matrix" className="py-24 bg-industrial text-parchment relative border-t border-olive/30">
       {/* CAD Watermark */}
-      <div className="absolute inset-0 bg-cad-grid-dark opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 bg-cad-grid-dark opacity-35 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Heading */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 border-b border-white/10 pb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 border-b border-olive/30 pb-8">
           <div>
-            <div className="font-mono text-xs text-safety tracking-widest uppercase mb-2 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-safety animate-pulse" />
+            <div className="font-mono text-xs text-copper tracking-widest uppercase mb-2 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-copper animate-pulse" />
               <span>DISCRETE 5-BUCKET RISK GOVERNANCE</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-parchment">
               FINANCIAL EXPOSURE MATRIX
             </h2>
-            <p className="text-sm text-white/60 mt-1 max-w-xl font-sans">
+            <p className="text-sm text-limestone mt-1 max-w-xl font-sans">
               Unlike generic spreadsheets that confuse claims with revenue, AmendFlow maintains five mutually exclusive non-overlapping exposure buckets.
             </p>
           </div>
 
-          <div className="mt-4 md:mt-0 font-mono text-xs text-white/50 flex items-center gap-2">
-            <Info className="w-4 h-4 text-blueprint-cyan" />
+          <div className="mt-4 md:mt-0 font-mono text-xs text-limestone flex items-center gap-2">
+            <Info className="w-4 h-4 text-copper" />
             <span>TENANT: NORTHSTAR INFRASTRUCTURE LIVE DATA</span>
           </div>
         </div>
@@ -105,58 +104,58 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
             return (
               <div
                 key={b.id}
-                className="rounded-xl bg-charcoal-900 border border-white/15 p-5 shadow-xl flex flex-col justify-between hover:border-white/30 transition-all group"
+                className="rounded-xl bg-forest border border-olive/40 p-5 shadow-elevated flex flex-col justify-between hover:border-copper/70 transition-all group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className={`p-2 rounded-lg border ${b.color}`}>
                       <Icon className="w-4 h-4" />
                     </span>
-                    <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-white/10 text-white/70">
+                    <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-industrial text-limestone border border-olive/30">
                       {b.status}
                     </span>
                   </div>
 
-                  <h4 className="text-xs font-mono tracking-wider text-white/60 uppercase">
+                  <h4 className="text-xs font-mono tracking-wider text-limestone uppercase">
                     {b.title}
                   </h4>
 
                   <div className="my-2">
-                    <span className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white block">
+                    <span className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-parchment block">
                       {b.compact}
                     </span>
-                    <span className="text-[11px] font-mono text-white/40 block">
+                    <span className="text-[11px] font-mono text-limestone/80 block">
                       {b.value}
                     </span>
                   </div>
 
-                  <p className="text-xs text-white/60 leading-relaxed font-sans mt-3">
+                  <p className="text-xs text-limestone leading-relaxed font-sans mt-3">
                     {b.desc}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between font-mono text-[10px] text-white/40">
+                <div className="mt-4 pt-3 border-t border-olive/20 flex items-center justify-between font-mono text-[10px] text-limestone/70">
                   <span>DISCRETE LEDGER</span>
-                  <span className="text-white/60">PAISE MATH</span>
+                  <span className="text-copper font-semibold">PAISE MATH</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Bottom Callout & Live Workspace Link */}
-        <div className="p-6 rounded-xl bg-charcoal-900 border border-white/15 flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Bottom Callout & Live Workspace Link in Deep Forest Charcoal */}
+        <div className="p-6 rounded-xl bg-forest border border-olive/50 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h4 className="text-base font-bold text-white">
+            <h4 className="text-base font-bold text-parchment">
               Ready to eliminate unapproved variation leakage?
             </h4>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="text-xs text-limestone mt-0.5">
               Experience the live financial control dashboard pre-seeded with multi-crore infrastructure data.
             </p>
           </div>
 
           <Link to="/login">
-            <MagneticButton variant="safety" className="px-6 py-2.5 text-xs font-bold tracking-wider">
+            <MagneticButton variant="copper" className="px-6 py-2.5 text-xs font-bold tracking-wider shadow-copper">
               <span>Enter Financial Exposure Hub</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </MagneticButton>
@@ -166,4 +165,3 @@ export const FinancialExposureLiveTeaser: React.FC = () => {
     </section>
   );
 };
-

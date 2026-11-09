@@ -7,81 +7,69 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#F5F6F4',
+        // Luxury Architectural Palette
+        forest: {
+          DEFAULT: '#151D19', // Deep forest charcoal
+          dark: '#0E1411',
+          surface: '#1A241F',
+        },
+        industrial: {
+          DEFAULT: '#28362E', // Industrial green
+          dark: '#1F2A24',
+          light: '#33443B',
+        },
+        olive: {
+          DEFAULT: '#68745B', // Weathered olive
+          dark: '#545E4A',
+          light: '#7F8E6F',
+        },
+        copper: {
+          DEFAULT: '#BD6847', // Oxidised copper
+          hover: '#A85637',
+          light: '#D47D5C',
+          muted: '#8E4B33',
+        },
+        limestone: {
+          DEFAULT: '#C9B99E', // Natural limestone
+          dark: '#B5A384',
+          light: '#DCD0BB',
+          subtle: '#E8E0D1',
+        },
+        parchment: {
+          DEFAULT: '#E5DCCB', // Warm parchment
+          light: '#F4EFE6',
+          muted: '#D0C4AF',
+        },
+
+        // System Base Tokens
+        background: '#151D19',
         surface: {
-          DEFAULT: '#FFFFFF',
-          subtle: '#FAFBF9',
-          muted: '#F0F2F0',
+          DEFAULT: '#28362E',
+          subtle: '#1F2A24',
+          muted: '#151D19',
         },
         border: {
-          DEFAULT: '#E3E7E9',
-          dark: '#CFD6D9',
+          DEFAULT: '#68745B',
+          dark: '#33443B',
+          light: '#C9B99E',
         },
         primary: {
-          DEFAULT: '#183B45',
-          hover: '#122D35',
-          light: '#EAF0F1',
-          foreground: '#FFFFFF',
+          DEFAULT: '#28362E',
+          hover: '#1F2A24',
+          light: '#68745B',
+          foreground: '#E5DCCB',
         },
         secondary: {
-          DEFAULT: '#357B75',
-          hover: '#2A635E',
-          light: '#EDF6F5',
-          foreground: '#FFFFFF',
+          DEFAULT: '#BD6847',
+          hover: '#A85637',
+          light: '#C9B99E',
+          foreground: '#151D19',
         },
         text: {
-          primary: '#172B3A',
-          secondary: '#697783',
-          muted: '#8F9CA7',
-          inverted: '#FFFFFF',
-        },
-        charcoal: {
-          950: '#070C0E',
-          900: '#0B1317',
-          800: '#121E24',
-          700: '#172B3A',
-          600: '#1E3648',
-        },
-        concrete: {
-          DEFAULT: '#2A3F4D',
-          dark: '#1E2D36',
-          light: '#3D4F5C',
-          muted: '#8A99A4',
-          paper: '#E3E7E9',
-        },
-        safety: {
-          DEFAULT: '#E05A34',
-          hover: '#C84D29',
-          light: '#FCECE8',
-          border: '#F8BBAA',
-        },
-        blueprint: {
-          DEFAULT: '#26A69A',
-          cyan: '#38BDF8',
-          line: 'rgba(56, 189, 248, 0.4)',
-          glow: 'rgba(38, 166, 154, 0.25)',
-        },
-        status: {
-          success: {
-            DEFAULT: '#2E7D32',
-            bg: '#EDF7ED',
-            border: '#C8E6C9',
-          },
-          warning: {
-            DEFAULT: '#D97706',
-            bg: '#FFFBEB',
-            border: '#FDE68A',
-          },
-          danger: {
-            DEFAULT: '#C53030',
-            bg: '#FDF2F2',
-            border: '#FECACA',
-          },
-          info: {
-            DEFAULT: '#1D4ED8',
-            bg: '#EFF6FF',
-            border: '#BFDBFE',
-          },
+          primary: '#E5DCCB',
+          secondary: '#C9B99E',
+          muted: '#68745B',
+          dark: '#151D19',
         },
       },
       fontFamily: {
@@ -89,8 +77,9 @@ export default {
         mono: ['"JetBrains Mono"', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
       },
       boxShadow: {
-        'subtle': '0 1px 3px 0 rgba(23, 43, 58, 0.05), 0 1px 2px 0 rgba(23, 43, 58, 0.03)',
-        'elevated': '0 4px 6px -1px rgba(23, 43, 58, 0.07), 0 2px 4px -1px rgba(23, 43, 58, 0.04)',
+        'subtle': '0 1px 3px 0 rgba(21, 29, 25, 0.3), 0 1px 2px 0 rgba(21, 29, 25, 0.2)',
+        'elevated': '0 4px 12px -2px rgba(21, 29, 25, 0.5), 0 2px 6px -1px rgba(21, 29, 25, 0.3)',
+        'copper': '0 0 20px -3px rgba(189, 104, 71, 0.35)',
       },
     },
   },

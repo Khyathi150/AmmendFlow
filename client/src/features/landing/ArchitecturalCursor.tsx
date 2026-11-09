@@ -78,18 +78,18 @@ export const ArchitecturalCursor: React.FC = () => {
         opacity: isVisible ? 1 : 0,
       }}
     >
-      {/* Precision Crosshairs */}
+      {/* Precision Crosshairs in Architectural Palette */}
       <div className="relative flex items-center justify-center">
         {/* Horizontal axis */}
         <div
           className={`absolute h-[1px] -left-5 -right-5 transition-colors duration-200 ${
-            isHovered ? 'bg-safety' : isPointer ? 'bg-blueprint-cyan' : 'bg-white/40'
+            isHovered ? 'bg-copper' : isPointer ? 'bg-copper' : 'bg-limestone/50'
           }`}
         />
         {/* Vertical axis */}
         <div
           className={`absolute w-[1px] -top-5 -bottom-5 transition-colors duration-200 ${
-            isHovered ? 'bg-safety' : isPointer ? 'bg-blueprint-cyan' : 'bg-white/40'
+            isHovered ? 'bg-copper' : isPointer ? 'bg-copper' : 'bg-limestone/50'
           }`}
         />
 
@@ -97,24 +97,24 @@ export const ArchitecturalCursor: React.FC = () => {
         <div
           className={`w-5 h-5 rounded-full border transition-all duration-200 flex items-center justify-center ${
             isHovered
-              ? 'scale-150 border-safety bg-safety/10'
+              ? 'scale-150 border-copper bg-copper/20 shadow-copper'
               : isPointer
-              ? 'scale-125 border-blueprint-cyan bg-blueprint-cyan/10'
-              : 'scale-100 border-white/60 bg-transparent'
+              ? 'scale-125 border-copper bg-copper/15'
+              : 'scale-100 border-limestone/70 bg-transparent'
           }`}
         >
           <div
             className={`w-1 h-1 rounded-full transition-colors duration-200 ${
-              isHovered ? 'bg-safety' : isPointer ? 'bg-blueprint-cyan' : 'bg-white'
+              isHovered ? 'bg-copper' : isPointer ? 'bg-copper' : 'bg-parchment'
             }`}
           />
         </div>
 
-        {/* Dynamic CAD Coordinate Readout */}
+        {/* Dynamic CAD Coordinate Readout in Forest Charcoal & Limestone */}
         <div className="absolute left-4 top-4 select-none pointer-events-none whitespace-nowrap">
-          <div className="font-mono text-[9px] tracking-widest px-1.5 py-0.5 rounded bg-charcoal-900/90 text-white/70 border border-white/10 backdrop-blur-sm shadow-sm">
+          <div className="font-mono text-[9px] tracking-widest px-2 py-0.5 rounded bg-forest/95 text-parchment border border-olive/50 backdrop-blur-md shadow-elevated">
             <span>X:{coords.x}</span>
-            <span className="mx-1 text-white/30">|</span>
+            <span className="mx-1 text-copper">|</span>
             <span>Y:{coords.y}</span>
           </div>
         </div>
@@ -122,4 +122,3 @@ export const ArchitecturalCursor: React.FC = () => {
     </div>
   );
 };
-
