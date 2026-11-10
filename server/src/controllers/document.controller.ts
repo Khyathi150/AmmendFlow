@@ -4,6 +4,8 @@ import path from 'path';
 import multer from 'multer';
 import { Attachment } from '../models/Attachment.js';
 import { DrawingAnnotation } from '../models/DrawingAnnotation.js';
+import { Project } from '../models/Project.js';
+import { ChangeOrder } from '../models/ChangeOrder.js';
 import { env } from '../config/env.js';
 import { sendSuccess, sendError } from '../utils/responseEnvelope.js';
 import { z } from 'zod';
@@ -37,6 +39,20 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
     if (!projectId || !Types.ObjectId.isValid(projectId)) {
       sendError(res, 'INVALID_PROJECT', 'A valid project ID is required', 400);
       return;
+    }
+
+    const project = await Project.findOne({ _id: projectId, organization: req.orgId });
+    if (!project) {
+      sendError(res, 'NOT_FOUND', 'Target project not found in current organization', 404);
+      return;
+    }
+
+    if (changeOrderId && Types.ObjectId.isValid(changeOrderId)) {
+      const co = await ChangeOrder.findOne({ _id: changeOrderId, organization: req.orgId });
+      if (!co) {
+        sendError(res, 'NOT_FOUND', 'Change order not found in current organization', 404);
+        return;
+      }
     }
 
     const attachment = new Attachment({
@@ -113,6 +129,12 @@ export async function getAnnotations(req: Request, res: Response): Promise<void>
       return;
     }
 
+    const doc = await Attachment.findOne({ _id: documentId, organization: req.orgId });
+    if (!doc) {
+      sendError(res, 'NOT_FOUND', 'Document not found in current organization', 404);
+      return;
+    }
+
     const annotations = await DrawingAnnotation.find({ document: documentId })
       .sort({ createdAt: 1 })
       .populate('createdBy', 'name email')
@@ -130,6 +152,12 @@ export async function createAnnotation(req: Request, res: Response): Promise<voi
     const { documentId } = req.params;
     if (!Types.ObjectId.isValid(documentId)) {
       sendError(res, 'INVALID_ID', 'Invalid document identifier', 400);
+      return;
+    }
+
+    const doc = await Attachment.findOne({ _id: documentId, organization: req.orgId });
+    if (!doc) {
+      sendError(res, 'NOT_FOUND', 'Document not found in current organization', 404);
       return;
     }
 
@@ -168,6 +196,23 @@ export async function createAnnotation(req: Request, res: Response): Promise<voi
 export async function deleteAnnotation(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    if (!Types.ObjectId.isValid(id)) {
+      sendError(res, 'INVALID_ID', 'Invalid annotation identifier', 400);
+      return;
+    }
+
+    const annotation = await DrawingAnnotation.findById(id);
+    if (!annotation) {
+      sendError(res, 'NOT_FOUND', 'Annotation not found', 404);
+      return;
+    }
+
+    const doc = await Attachment.findOne({ _id: annotation.document, organization: req.orgId });
+    if (!doc) {
+      sendError(res, 'FORBIDDEN', 'Access denied to this document annotation', 403);
+      return;
+    }
+
     await DrawingAnnotation.findByIdAndDelete(id);
     sendSuccess(res, { id }, 200, 'Annotation deleted');
   } catch (error: any) {

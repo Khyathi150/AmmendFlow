@@ -19,7 +19,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { CurrencyDisplay } from '../../components/shared/CurrencyDisplay';
-import { calculateEstimateTotals } from '../../../../server/src/utils/currencyMath';
+import { calculateEstimateTotals } from '../../lib/utils';
 
 export const NewChangeOrderView: React.FC = () => {
   const navigate = useNavigate();

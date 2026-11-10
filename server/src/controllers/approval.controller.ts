@@ -120,6 +120,17 @@ export async function recordApprovalDecision(req: Request, res: Response): Promi
 export async function getApprovalsForOrder(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    if (!Types.ObjectId.isValid(id)) {
+      sendError(res, 'INVALID_ID', 'Invalid change order identifier', 400);
+      return;
+    }
+
+    const changeOrder = await ChangeOrder.findOne({ _id: id, organization: req.orgId });
+    if (!changeOrder) {
+      sendError(res, 'NOT_FOUND', 'Change order not found in current organization', 404);
+      return;
+    }
+
     const approvals = await Approval.find({ changeOrder: id })
       .sort({ signedAt: 1 })
       .populate('approver', 'name email');

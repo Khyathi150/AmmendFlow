@@ -71,6 +71,30 @@ export default {
           muted: '#68745B',
           dark: '#151D19',
         },
+
+        // Status & Governance Indicators in Architectural Palette
+        status: {
+          success: {
+            DEFAULT: '#C9B99E',
+            bg: '#1F2A24',
+            border: '#68745B',
+          },
+          warning: {
+            DEFAULT: '#BD6847',
+            bg: '#2A1F18',
+            border: '#8E4B33',
+          },
+          danger: {
+            DEFAULT: '#D47D5C',
+            bg: '#2D1815',
+            border: '#BD6847',
+          },
+          info: {
+            DEFAULT: '#E5DCCB',
+            bg: '#28362E',
+            border: '#68745B',
+          },
+        },
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],

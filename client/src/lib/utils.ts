@@ -82,3 +82,48 @@ export function rupeesToPaise(rupees: number | string): number {
 export function paiseToRupees(paise: number): number {
   return Math.round(paise || 0) / 100;
 }
+
+export interface EstimateTotals {
+  directCostPaise: number;
+  overheadPct: number;
+  overheadPaise: number;
+  preMarkupPaise: number;
+  markupPct: number;
+  markupPaise: number;
+  taxPct: number;
+  taxablePaise: number;
+  taxPaise: number;
+  totalProposedPaise: number;
+}
+
+export function calculateEstimateTotals(
+  directCostPaise: number,
+  overheadPct: number = 0,
+  markupPct: number = 0,
+  taxPct: number = 0
+): EstimateTotals {
+  const direct = Math.max(0, Math.round(directCostPaise));
+  const overheadPercent = Math.max(0, Number(overheadPct) || 0);
+  const markupPercent = Math.max(0, Number(markupPct) || 0);
+  const taxPercent = Math.max(0, Number(taxPct) || 0);
+
+  const overheadPaise = Math.round((direct * overheadPercent) / 100);
+  const preMarkupPaise = direct + overheadPaise;
+  const markupPaise = Math.round((preMarkupPaise * markupPercent) / 100);
+  const taxablePaise = preMarkupPaise + markupPaise;
+  const taxPaise = Math.round((taxablePaise * taxPercent) / 100);
+  const totalProposedPaise = taxablePaise + taxPaise;
+
+  return {
+    directCostPaise: direct,
+    overheadPct: overheadPercent,
+    overheadPaise,
+    preMarkupPaise,
+    markupPct: markupPercent,
+    markupPaise,
+    taxPct: taxPercent,
+    taxablePaise,
+    taxPaise,
+    totalProposedPaise,
+  };
+}

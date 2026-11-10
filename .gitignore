@@ -18,6 +18,8 @@ build/
 # Uploads & temporary storage
 uploads/*
 !uploads/.gitkeep
+server/uploads/*
+!server/uploads/.gitkeep
 
 # Logs
 npm-debug.log*

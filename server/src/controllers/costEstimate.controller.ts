@@ -122,6 +122,20 @@ export async function saveEstimate(req: Request, res: Response): Promise<void> {
 export async function getEstimates(req: Request, res: Response): Promise<void> {
   try {
     const { changeOrderId } = req.params;
+    if (!Types.ObjectId.isValid(changeOrderId)) {
+      sendError(res, 'INVALID_ID', 'Invalid change order identifier', 400);
+      return;
+    }
+
+    const changeOrder = await ChangeOrder.findOne({
+      _id: changeOrderId,
+      organization: req.orgId,
+    });
+    if (!changeOrder) {
+      sendError(res, 'NOT_FOUND', 'Change order not found in current organization', 404);
+      return;
+    }
+
     const estimates = await CostEstimate.find({ changeOrder: changeOrderId })
       .sort({ version: -1 })
       .populate('preparedBy', 'name email');

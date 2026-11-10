@@ -30,17 +30,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-primary text-white hover:bg-primary-hover focus-visible:ring-primary shadow-sm active:scale-[0.99]',
+        'bg-industrial text-parchment hover:bg-industrial-light border border-olive/40 focus-visible:ring-copper shadow-subtle active:scale-[0.99]',
       secondary:
-        'bg-secondary text-white hover:bg-secondary-hover focus-visible:ring-secondary shadow-sm active:scale-[0.99]',
+        'bg-copper text-parchment hover:bg-copper-hover border border-copper/80 focus-visible:ring-copper shadow-copper active:scale-[0.99]',
       outline:
-        'border border-border bg-surface text-text-primary hover:bg-surface-subtle hover:border-border-dark focus-visible:ring-primary active:scale-[0.99]',
+        'border border-olive/50 bg-forest text-parchment hover:bg-industrial hover:border-limestone/50 focus-visible:ring-copper active:scale-[0.99]',
       ghost:
-        'text-text-primary hover:bg-surface-muted hover:text-text-primary focus-visible:ring-primary',
+        'text-limestone hover:bg-industrial/80 hover:text-parchment focus-visible:ring-copper',
       danger:
-        'bg-status-danger text-white hover:bg-red-700 focus-visible:ring-red-600 shadow-sm active:scale-[0.99]',
+        'bg-copper-muted text-parchment hover:bg-copper border border-copper/60 focus-visible:ring-copper shadow-subtle active:scale-[0.99]',
       subtle:
-        'bg-secondary-light text-secondary hover:bg-teal-100 focus-visible:ring-secondary',
+        'bg-industrial/60 text-limestone hover:bg-industrial hover:text-parchment border border-olive/30 focus-visible:ring-copper',
     };
 
     const sizes = {
