@@ -3,6 +3,7 @@ import {
   upload,
   uploadDocument,
   getDocuments,
+  streamDocumentFile,
   getAnnotations,
   createAnnotation,
   deleteAnnotation,
@@ -16,6 +17,7 @@ router.use(requireOrgContext);
 
 router.post('/upload', upload.single('file'), uploadDocument);
 router.get('/', getDocuments);
+router.get('/:id/file', streamDocumentFile);
 
 // Drawing Markup Annotations
 router.get('/:documentId/annotations', getAnnotations);
@@ -23,4 +25,3 @@ router.post('/:documentId/annotations', createAnnotation);
 router.delete('/annotations/:id', deleteAnnotation);
 
 export default router;
-

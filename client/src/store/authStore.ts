@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { User, Organization, UserRole } from '../types';
+import { User, Organization } from '../types';
 import { api } from '../lib/axios';
+import { setStoredAuthToken } from '../lib/apiConfig';
 
 interface AuthState {
   user: User | null;
@@ -36,6 +37,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res: any = await api.post('/auth/login', credentials);
+      if (res.data?.token) {
+        setStoredAuthToken(res.data.token);
+      }
       set({
         user: res.data.user,
         activeOrganization: res.data.activeOrganization,
@@ -56,6 +60,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res: any = await api.post('/auth/register', payload);
+      if (res.data?.token) {
+        setStoredAuthToken(res.data.token);
+      }
       set({
         user: res.data.user,
         activeOrganization: res.data.activeOrganization,
@@ -78,6 +85,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (err) {
       console.warn('Logout error ignored:', err);
     } finally {
+      setStoredAuthToken(null);
       set({
         user: null,
         activeOrganization: null,
@@ -92,10 +100,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res: any = await api.post('/auth/switch-org', { organizationId });
-      set((state) => ({
+      if (res.data?.token) {
+        setStoredAuthToken(res.data.token);
+      }
+      set({
         activeOrganization: res.data.activeOrganization,
         isLoading: false,
-      }));
+      });
     } catch (err: any) {
       set({
         error: err.message || 'Failed to switch organization workspace.',
@@ -117,6 +128,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       });
     } catch (err) {
+      setStoredAuthToken(null);
       set({
         user: null,
         activeOrganization: null,
@@ -129,4 +141,3 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   clearError: () => set({ error: null }),
 }));
-

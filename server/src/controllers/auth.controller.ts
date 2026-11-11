@@ -30,7 +30,7 @@ function generateToken(userId: Types.ObjectId, activeOrgId?: Types.ObjectId): st
       activeOrgId: activeOrgId ? activeOrgId.toString() : undefined,
     },
     env.JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
   );
 }
 

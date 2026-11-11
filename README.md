@@ -121,13 +121,62 @@ Open [http://localhost:5173](http://localhost:5173) in your browser and sign in 
 ## 7. Running Automated Tests
 
 ```bash
-# Run backend test suite (unit tests & workflow governance)
+# Run all tests (backend governance/security + client unit tests)
+npm test
+
+# Run backend tests individually
 npm run test:server
+
+# Run client tests individually
+npm run test:client
 ```
 Tests cover:
 - Exact integer paise mathematics without floating-point rounding.
 - Indian numbering currency formatting.
-- State machine role enforcement.
+- End-to-end 13-step construction variation & invoicing lifecycle.
+- State machine role enforcement and cross-tenant API/Socket.IO isolation.
 - Mandatory justification check for unapproved work execution.
 - Overpayment prevention on variation invoices.
+- Production startup guards (`JWT_SECRET`, `MONGODB_URI`, strict CORS, S3 object storage).
+
+---
+
+## 8. Production Deployment Guide (Separate Frontend & Backend)
+
+AmendFlow strictly disables ephemeral local disk uploads, allow-all CORS, fallback JWT secrets, and in-memory MongoDB fallbacks when `NODE_ENV=production`.
+
+### Required Backend Environment Variables (`server/.env` or Host Secrets)
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `NODE_ENV` | Yes | Must be `production`. |
+| `PORT` | Yes | Assigned server listening port (default `5000`). Server binds `0.0.0.0:PORT`. |
+| `MONGODB_URI` | Yes | Production MongoDB Atlas URI (`mongodb+srv://...`). Never falls back to `MongoMemoryServer`. |
+| `JWT_SECRET` | Yes | High-entropy random secret (>= 32 characters). |
+| `CLIENT_URL` | Yes | Exact frontend origin (e.g. `https://app.amendflow.com`). Strict CORS + Socket.IO origin match. |
+| `STORAGE_PROVIDER` | Yes | Must be `s3` in production (persistent object storage). |
+| `S3_BUCKET` | Yes | Bucket name (AWS S3, Cloudflare R2, DigitalOcean Spaces, MinIO, Backblaze B2). |
+| `S3_REGION` | Yes | Bucket region (e.g. `ap-south-1` or `auto` for R2). |
+| `S3_ACCESS_KEY_ID` | Yes | Object storage access key ID. |
+| `S3_SECRET_ACCESS_KEY` | Yes | Object storage secret access key. |
+| `S3_ENDPOINT` | Optional | Custom endpoint URL for S3-compatible providers (e.g. Cloudflare R2 / MinIO). |
+| `S3_FORCE_PATH_STYLE` | Optional | Set `true` for MinIO or path-style S3 endpoints. |
+| `PUBLIC_API_URL` | Optional | Canonical public backend origin if needed behind reverse proxies. |
+
+### Required Frontend Environment Variables (`client/.env.production`)
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `VITE_API_URL` | Yes (separate host) | Exact backend origin without `/api` suffix (e.g. `https://api.amendflow.com`). |
+
+### Build & Start Commands
+```bash
+# 1. Build backend and frontend artifacts
+npm run build
+
+# 2. Deploy client/dist to static SPA host (Vercel/Netlify/Cloudflare Pages)
+# SPA direct-refresh rewrites are preconfigured in client/vercel.json and client/public/_redirects.
+
+# 3. Start backend API (binds 0.0.0.0:$PORT)
+npm --prefix server run start
+```
+
 

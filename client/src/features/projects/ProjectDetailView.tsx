@@ -18,7 +18,7 @@ import {
   UserCheck,
   ShieldAlert,
 } from 'lucide-react';
-import { api } from '../../lib/axios';
+import { api, downloadAuthenticatedFile } from '../../lib/axios';
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Tabs } from '../../components/ui/Tabs';
@@ -226,11 +226,19 @@ export const ProjectDetailView: React.FC = () => {
               Log Change Order
             </Button>
           </Link>
-          <a href={`/api/projects/${project._id}/boq/export`} download>
-            <Button variant="outline" size="sm" leftIcon={Download}>
-              Export BOQ CSV
-            </Button>
-          </a>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={Download}
+            onClick={() =>
+              downloadAuthenticatedFile(
+                `/projects/${project._id}/boq/export`,
+                `BOQ-${project.code || 'Schedule'}.csv`
+              )
+            }
+          >
+            Export BOQ CSV
+          </Button>
         </div>
       </div>
 

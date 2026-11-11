@@ -1,28 +1,39 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { env } from './env.js';
+import type { MongoMemoryServer } from 'mongodb-memory-server';
+import { env, EnvConfig } from './env.js';
 
 let mongodInstance: MongoMemoryServer | null = null;
 
-export async function connectDB(): Promise<typeof mongoose> {
-  const uri = env.MONGODB_URI;
+export async function connectDB(config: Pick<EnvConfig, 'MONGODB_URI' | 'NODE_ENV'> = env): Promise<typeof mongoose> {
+  const uri = config.MONGODB_URI?.trim() || '';
+  const isProd = config.NODE_ENV === 'production';
 
-  if (uri && uri.trim() !== '') {
+  if (uri !== '') {
+    console.log(`[Database] Connecting to MongoDB at ${uri.replace(/\/\/.*@/, '//<credentials>@')}...`);
     try {
-      console.log(`[Database] Connecting to MongoDB at ${uri.replace(/\/\/.*@/, '//<credentials>@')}...`);
       const conn = await mongoose.connect(uri, {
         autoIndex: true,
+        serverSelectionTimeoutMS: 10000,
       });
       console.log(`[Database] MongoDB connected successfully: ${conn.connection.host}`);
       return conn;
     } catch (err) {
-      console.warn(`[Database] Failed to connect to configured MONGODB_URI. Falling back to embedded MongoMemoryServer...`, err);
+      // Never silently fall back to MongoMemoryServer when an explicit URI fails.
+      console.error('[Database] FATAL: Failed to connect to configured MONGODB_URI.', err);
+      throw err;
     }
   }
 
-  // Start embedded in-memory MongoDB instance for seamless zero-config operation
+  if (isProd) {
+    throw new Error(
+      '[Database] FATAL: MONGODB_URI must be configured in production. Embedded MongoMemoryServer fallback is disabled.'
+    );
+  }
+
+  // Start embedded in-memory MongoDB instance ONLY in non-production environments when MONGODB_URI is unset
   console.log('[Database] Starting embedded MongoDB Memory Server for local development/testing...');
-  mongodInstance = await MongoMemoryServer.create({
+  const { MongoMemoryServer: MemoryServer } = await import('mongodb-memory-server');
+  mongodInstance = await MemoryServer.create({
     instance: {
       dbName: 'amendflow_dev',
     },
@@ -46,4 +57,3 @@ export async function disconnectDB(): Promise<void> {
   }
   console.log('[Database] Disconnected from MongoDB.');
 }
-

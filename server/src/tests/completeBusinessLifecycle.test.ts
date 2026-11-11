@@ -131,7 +131,8 @@ describe('AmendFlow End-to-End Business Scenario & Governance Verification', () 
   });
 
   // Step 5: Attach Supporting Evidence / Document
-  it('5. Attaches supporting technical documentation and evidence', async () => {
+  it('5. Attaches supporting technical documentation and streams it back securely', async () => {
+    const pdfPayload = '%PDF-1.4 Mock Geotech Borehole Core Test Data Log';
     const res = await request(app)
       .post('/api/documents/upload')
       .set('Authorization', `Bearer ${orgAToken}`)
@@ -139,12 +140,19 @@ describe('AmendFlow End-to-End Business Scenario & Governance Verification', () 
       .field('changeOrderId', changeOrderId)
       .field('category', 'Variation Evidence')
       .field('notes', 'Geotechnical Core Log & Unconfined Compressive Strength Test Certificates')
-      .attach('file', Buffer.from('%PDF-1.4 Mock Geotech Borehole Core Test Data Log'), 'Borehole-P14-Geotech.pdf');
+      .attach('file', Buffer.from(pdfPayload), 'Borehole-P14-Geotech.pdf');
 
     assert.equal(res.status, 201);
     assert.equal(res.body.success, true);
     documentId = res.body.data.attachment._id;
     assert.equal(res.body.data.attachment.category, 'Variation Evidence');
+    assert.ok(res.body.data.attachment.fileUrl.includes(`/api/documents/${documentId}/file`));
+
+    const fileRes = await request(app)
+      .get(`/api/documents/${documentId}/file`)
+      .set('Authorization', `Bearer ${orgAToken}`);
+    assert.equal(fileRes.status, 200);
+    assert.equal(Buffer.from(fileRes.body).toString('utf8'), pdfPayload);
   });
 
   // Step 6: Calculate the Additional Cost (Cost Estimation Engine)
@@ -464,5 +472,11 @@ describe('AmendFlow End-to-End Business Scenario & Governance Verification', () 
       .field('projectId', projectId)
       .attach('file', Buffer.from('Malicious document'), 'exploit.pdf');
     assert.equal(uploadRes.status, 404);
+
+    // 6. Org B tries to download Org A document binary
+    const docFileRes = await request(app)
+      .get(`/api/documents/${documentId}/file`)
+      .set('Authorization', `Bearer ${orgBToken}`);
+    assert.equal(docFileRes.status, 404);
   });
 });

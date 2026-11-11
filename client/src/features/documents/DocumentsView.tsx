@@ -13,8 +13,10 @@ import {
   Trash2,
   Building2,
   Plus,
+  Download,
 } from 'lucide-react';
-import { api } from '../../lib/axios';
+import { api, downloadAuthenticatedFile } from '../../lib/axios';
+import { resolveUploadedDocumentUrl } from '../../lib/apiConfig';
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -71,6 +73,42 @@ export const DocumentsView: React.FC = () => {
 
   // Active selected document
   const activeDoc = documents.find((d: any) => d._id === selectedDocId) || documents[0];
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Load uploaded image preview safely across same-origin or separate frontend/backend deployments
+  useEffect(() => {
+    let active = true;
+    let objectUrl: string | null = null;
+
+    setPreviewUrl(null);
+    if (!activeDoc?._id || !activeDoc?.mimeType?.startsWith('image/')) {
+      return;
+    }
+
+    (async () => {
+      try {
+        const blobData: any = await api.get(`/documents/${activeDoc._id}/file`, {
+          responseType: 'blob',
+        });
+        if (!active) return;
+        const blob = blobData instanceof Blob ? blobData : new Blob([blobData]);
+        objectUrl = URL.createObjectURL(blob);
+        setPreviewUrl(objectUrl);
+      } catch {
+        // Fallback to resolved signed S3 URL or configured backend document URL if available
+        if (active && activeDoc?.fileUrl && /^https?:\/\//i.test(activeDoc.fileUrl)) {
+          setPreviewUrl(resolveUploadedDocumentUrl(activeDoc));
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [activeDoc?._id, activeDoc?.mimeType, activeDoc?.fileUrl]);
 
   // Annotations for active document
   const { data: annotationsData } = useQuery({
@@ -398,6 +436,21 @@ export const DocumentsView: React.FC = () => {
                   >
                     <ZoomIn className="w-4 h-4" />
                   </button>
+                  {activeDoc && (
+                    <button
+                      type="button"
+                      title="Download document"
+                      onClick={() =>
+                        downloadAuthenticatedFile(
+                          `/documents/${activeDoc._id}/file?download=1`,
+                          activeDoc.originalName || activeDoc.filename || 'document'
+                        )
+                      }
+                      className="p-1 ml-1 rounded text-text-muted hover:text-text-primary hover:bg-surface-muted"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -431,17 +484,29 @@ export const DocumentsView: React.FC = () => {
                 }}
                 className="relative border border-border shadow-subtle bg-white overflow-hidden cursor-crosshair select-none"
               >
-                {/* Simulated Engineering Blueprint Grid & Structural Axes */}
-                <div className="absolute inset-0 pointer-events-none opacity-20">
-                  <div className="w-full h-full border-2 border-dashed border-primary" />
-                  <div className="absolute top-1/3 left-0 right-0 border-t border-primary" />
-                  <div className="absolute top-2/3 left-0 right-0 border-t border-primary" />
-                  <div className="absolute left-1/3 top-0 bottom-0 border-l border-primary" />
-                  <div className="absolute left-2/3 top-0 bottom-0 border-l border-primary" />
-                  <span className="absolute top-3 left-3 text-[10px] font-mono text-primary font-bold">
-                    STRUCTURAL LEVEL -1 BASEMENT BLUEPRINT
-                  </span>
-                </div>
+                {/* Rendered uploaded image document (S3 / persistent object storage / backend stream) */}
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt={activeDoc?.originalName || 'Uploaded Blueprint'}
+                    onError={() => setPreviewUrl(null)}
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                  />
+                )}
+
+                {/* Simulated Engineering Blueprint Grid & Structural Axes (Fallback when PDF or grid overlay) */}
+                {!previewUrl && (
+                  <div className="absolute inset-0 pointer-events-none opacity-20">
+                    <div className="w-full h-full border-2 border-dashed border-primary" />
+                    <div className="absolute top-1/3 left-0 right-0 border-t border-primary" />
+                    <div className="absolute top-2/3 left-0 right-0 border-t border-primary" />
+                    <div className="absolute left-1/3 top-0 bottom-0 border-l border-primary" />
+                    <div className="absolute left-2/3 top-0 bottom-0 border-l border-primary" />
+                    <span className="absolute top-3 left-3 text-[10px] font-mono text-primary font-bold">
+                      STRUCTURAL LEVEL -1 BASEMENT BLUEPRINT
+                    </span>
+                  </div>
+                )}
 
                 <Stage
                   width={stageDimensions.width * zoom}

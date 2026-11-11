@@ -9,7 +9,7 @@ import {
   Building2,
   TrendingUp,
 } from 'lucide-react';
-import { api } from '../../lib/axios';
+import { api, downloadAuthenticatedFile } from '../../lib/axios';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { CurrencyDisplay } from '../../components/shared/CurrencyDisplay';
@@ -65,11 +65,19 @@ export const BOQManagementView: React.FC = () => {
           </p>
         </div>
         {activeProjectId && (
-          <a href={`/api/projects/${activeProjectId}/boq/export`} download>
-            <Button variant="outline" size="sm" leftIcon={Download}>
-              Export Full Schedule (CSV)
-            </Button>
-          </a>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={Download}
+            onClick={() =>
+              downloadAuthenticatedFile(
+                `/projects/${activeProjectId}/boq/export`,
+                `BOQ-Schedule.csv`
+              )
+            }
+          >
+            Export Full Schedule (CSV)
+          </Button>
         )}
       </div>
 

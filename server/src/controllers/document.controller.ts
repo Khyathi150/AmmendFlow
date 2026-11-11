@@ -1,31 +1,56 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
+import crypto from 'crypto';
 import path from 'path';
 import multer from 'multer';
-import { Attachment } from '../models/Attachment.js';
+import { Attachment, IAttachment } from '../models/Attachment.js';
 import { DrawingAnnotation } from '../models/DrawingAnnotation.js';
 import { Project } from '../models/Project.js';
 import { ChangeOrder } from '../models/ChangeOrder.js';
 import { env } from '../config/env.js';
+import { storageService } from '../services/storage.service.js';
 import { sendSuccess, sendError } from '../utils/responseEnvelope.js';
 import { z } from 'zod';
 
-// Configure Multer storage
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, env.UPLOAD_DIR);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${ext}`);
-  },
-});
-
+// Configure Multer in-memory storage so uploads delegate cleanly to StorageService (S3 in prod, local disk in dev)
 export const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
 });
+
+function getPublicBackendOrigin(req: Request): string {
+  if (env.PUBLIC_API_URL) {
+    return env.PUBLIC_API_URL;
+  }
+  const host = req.get('host');
+  if (!host) return '';
+  return `${req.protocol}://${host}`;
+}
+
+async function serializeAttachmentWithUrl(req: Request, doc: IAttachment | any) {
+  const plain = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
+  const relativeApiPath = `/api/documents/${plain._id}/file`;
+  const backendOrigin = getPublicBackendOrigin(req);
+
+  let fileUrl: string | null = null;
+  if (plain.storageProvider === 's3' && plain.storageKey) {
+    try {
+      fileUrl = await storageService.getSignedDownloadUrl('s3', plain.storageKey, plain.originalName, false);
+    } catch (err) {
+      console.warn('[Documents] Unable to generate signed URL, falling back to authenticated API path:', err);
+    }
+  }
+
+  if (!fileUrl) {
+    fileUrl = backendOrigin ? `${backendOrigin}${relativeApiPath}` : relativeApiPath;
+  }
+
+  return {
+    ...plain,
+    fileUrl,
+    downloadUrl: backendOrigin ? `${backendOrigin}${relativeApiPath}?download=1` : `${relativeApiPath}?download=1`,
+  };
+}
 
 export async function uploadDocument(req: Request, res: Response): Promise<void> {
   try {
@@ -55,24 +80,47 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
       }
     }
 
+    const ext = path.extname(path.basename(file.originalname)).replace(/[^a-zA-Z0-9.]/g, '');
+    const uniqueFilename = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}${ext}`;
+
+    const uploaded = await storageService.uploadObject({
+      orgId: String(req.orgId),
+      projectId: String(project._id),
+      filename: uniqueFilename,
+      buffer: file.buffer,
+      mimeType: file.mimetype || 'application/octet-stream',
+    });
+
     const attachment = new Attachment({
       organization: req.orgId,
       project: new Types.ObjectId(projectId),
-      changeOrder: changeOrderId && Types.ObjectId.isValid(changeOrderId)
-        ? new Types.ObjectId(changeOrderId)
-        : undefined,
-      filename: file.filename,
+      changeOrder:
+        changeOrderId && Types.ObjectId.isValid(changeOrderId)
+          ? new Types.ObjectId(changeOrderId)
+          : undefined,
+      filename: uniqueFilename,
       originalName: file.originalname,
-      mimeType: file.mimetype,
+      mimeType: file.mimetype || 'application/octet-stream',
       sizeBytes: file.size,
-      storagePath: `/uploads/${file.filename}`,
+      storageProvider: uploaded.storageProvider,
+      storageKey: uploaded.storageKey,
+      storagePath: '', // set right below using _id
       category,
       uploadedBy: req.user?._id,
       notes,
     });
+    attachment.storagePath = `/api/documents/${attachment._id}/file`;
 
-    await attachment.save();
-    sendSuccess(res, { attachment }, 201, 'File uploaded successfully');
+    try {
+      await attachment.save();
+    } catch (saveErr) {
+      // Clean up orphaned uploaded blob if DB persistence fails (e.g. validation error)
+      await storageService.deleteObject(uploaded.storageProvider, uploaded.storageKey);
+      throw saveErr;
+    }
+
+    const enriched = await serializeAttachmentWithUrl(req, attachment);
+    sendSuccess(res, { attachment: enriched }, 201, 'File uploaded successfully');
   } catch (error: any) {
     console.error('[UploadDocument] Error:', error);
     sendError(res, 'UPLOAD_FAILED', error.message || 'File upload failed', 500);
@@ -100,10 +148,70 @@ export async function getDocuments(req: Request, res: Response): Promise<void> {
       .populate('uploadedBy', 'name email')
       .populate('changeOrder', 'orderNumber title');
 
-    sendSuccess(res, { documents });
+    const enrichedDocs = await Promise.all(
+      documents.map((doc) => serializeAttachmentWithUrl(req, doc))
+    );
+
+    sendSuccess(res, { documents: enrichedDocs });
   } catch (error: any) {
     console.error('[GetDocuments] Error:', error);
     sendError(res, 'FETCH_DOCUMENTS_FAILED', error.message || 'Failed to fetch documents', 500);
+  }
+}
+
+export async function streamDocumentFile(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    if (!Types.ObjectId.isValid(id)) {
+      sendError(res, 'INVALID_ID', 'Invalid document identifier', 400);
+      return;
+    }
+
+    const doc = await Attachment.findOne({ _id: id, organization: req.orgId });
+    if (!doc) {
+      sendError(res, 'NOT_FOUND', 'Document not found in current organization', 404);
+      return;
+    }
+
+    const provider = doc.storageProvider || 'local';
+    const key = doc.storageKey || path.basename(doc.storagePath || doc.filename);
+
+    let objectStreamResult;
+    try {
+      objectStreamResult = await storageService.getObjectStream(provider, key);
+    } catch (storageErr: any) {
+      if (storageErr?.code === 'ENOENT' || storageErr?.name === 'NoSuchKey') {
+        sendError(res, 'FILE_NOT_FOUND', 'Document binary file could not be located in storage', 404);
+        return;
+      }
+      throw storageErr;
+    }
+
+    const isDownload = req.query.download === '1' || req.query.download === 'true';
+    const safeOriginalName = path.basename(doc.originalName || doc.filename).replace(/"/g, '');
+    res.setHeader('Content-Type', objectStreamResult.contentType || doc.mimeType || 'application/octet-stream');
+    if (typeof objectStreamResult.contentLength === 'number') {
+      res.setHeader('Content-Length', String(objectStreamResult.contentLength));
+    }
+    res.setHeader(
+      'Content-Disposition',
+      `${isDownload ? 'attachment' : 'inline'}; filename="${safeOriginalName}"`
+    );
+    res.setHeader('Cache-Control', 'private, max-age=300');
+
+    objectStreamResult.stream.on('error', (streamErr) => {
+      console.error('[StreamDocumentFile] Stream error:', streamErr);
+      if (!res.headersSent) {
+        sendError(res, 'STREAM_FAILED', 'Failed to read document stream', 500);
+      } else {
+        res.destroy(streamErr);
+      }
+    });
+
+    objectStreamResult.stream.pipe(res);
+  } catch (error: any) {
+    console.error('[StreamDocumentFile] Error:', error);
+    sendError(res, 'FETCH_FILE_FAILED', error.message || 'Failed to retrieve document binary', 500);
   }
 }
 
@@ -170,9 +278,10 @@ export async function createAnnotation(req: Request, res: Response): Promise<voi
     const data = parseResult.data;
     const annotation = new DrawingAnnotation({
       document: new Types.ObjectId(documentId),
-      changeOrder: data.changeOrderId && Types.ObjectId.isValid(data.changeOrderId)
-        ? new Types.ObjectId(data.changeOrderId)
-        : undefined,
+      changeOrder:
+        data.changeOrderId && Types.ObjectId.isValid(data.changeOrderId)
+          ? new Types.ObjectId(data.changeOrderId)
+          : undefined,
       pageNumber: data.pageNumber,
       type: data.type,
       normalizedX: data.normalizedX,
@@ -220,4 +329,3 @@ export async function deleteAnnotation(req: Request, res: Response): Promise<voi
     sendError(res, 'DELETE_ANNOTATION_FAILED', error.message || 'Failed to delete annotation', 500);
   }
 }
-

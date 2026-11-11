@@ -10,6 +10,8 @@ export type DocumentCategory =
   | 'Payment Receipt'
   | 'General';
 
+export type AttachmentStorageProvider = 'local' | 's3';
+
 export interface IAttachment extends Document {
   _id: Types.ObjectId;
   organization: Types.ObjectId;
@@ -20,6 +22,8 @@ export interface IAttachment extends Document {
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
+  storageProvider: AttachmentStorageProvider;
+  storageKey?: string;
   category: DocumentCategory;
   version: number;
   uploadedBy: Types.ObjectId;
@@ -38,6 +42,13 @@ const attachmentSchema = new Schema<IAttachment>(
     mimeType: { type: String, required: true },
     sizeBytes: { type: Number, required: true },
     storagePath: { type: String, required: true },
+    storageProvider: {
+      type: String,
+      enum: ['local', 's3'],
+      default: 'local',
+      required: true,
+    },
+    storageKey: { type: String },
     category: {
       type: String,
       enum: [
@@ -62,4 +73,3 @@ const attachmentSchema = new Schema<IAttachment>(
 );
 
 export const Attachment = mongoose.model<IAttachment>('Attachment', attachmentSchema);
-

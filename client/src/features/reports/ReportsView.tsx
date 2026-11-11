@@ -9,7 +9,7 @@ import {
   AlertTriangle,
   Printer,
 } from 'lucide-react';
-import { api } from '../../lib/axios';
+import { api, downloadAuthenticatedFile } from '../../lib/axios';
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { CurrencyDisplay } from '../../components/shared/CurrencyDisplay';
@@ -40,7 +40,7 @@ export const ReportsView: React.FC = () => {
 
   const changeOrders = reportData?.changeOrders || [];
 
-  const exportUrl = `/api/reports/variation-register?format=csv${
+  const exportPath = `/reports/variation-register?format=csv${
     projectId !== 'all' ? `&projectId=${projectId}` : ''
   }`;
 
@@ -57,11 +57,14 @@ export const ReportsView: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <a href={exportUrl} download>
-            <Button variant="secondary" size="sm" leftIcon={Download}>
-              Download CSV Register
-            </Button>
-          </a>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={Download}
+            onClick={() => downloadAuthenticatedFile(exportPath, 'Variation-Register.csv')}
+          >
+            Download CSV Register
+          </Button>
           <Button
             variant="outline"
             size="sm"
