@@ -10,7 +10,7 @@ export type DocumentCategory =
   | 'Payment Receipt'
   | 'General';
 
-export type AttachmentStorageProvider = 'local' | 's3';
+export type AttachmentStorageProvider = 'local' | 'cloudinary';
 
 export interface IAttachment extends Document {
   _id: Types.ObjectId;
@@ -24,6 +24,8 @@ export interface IAttachment extends Document {
   storagePath: string;
   storageProvider: AttachmentStorageProvider;
   storageKey?: string;
+  storageUrl?: string;
+  cloudinaryResourceType?: string;
   category: DocumentCategory;
   version: number;
   uploadedBy: Types.ObjectId;
@@ -44,11 +46,13 @@ const attachmentSchema = new Schema<IAttachment>(
     storagePath: { type: String, required: true },
     storageProvider: {
       type: String,
-      enum: ['local', 's3'],
+      enum: ['local', 'cloudinary'],
       default: 'local',
       required: true,
     },
     storageKey: { type: String },
+    storageUrl: { type: String },
+    cloudinaryResourceType: { type: String },
     category: {
       type: String,
       enum: [

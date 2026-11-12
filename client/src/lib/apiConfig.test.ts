@@ -25,11 +25,12 @@ describe('Separate Frontend & Backend Deployment URL Resolution', () => {
     );
   });
 
-  it('resolves document URLs cleanly for both signed S3 URLs and backend API streams', () => {
-    const signedS3Url = 'https://amendflow-prod.s3.ap-south-1.amazonaws.com/orgs/1/doc.pdf?X-Amz-Signature=xyz';
+  it('resolves document URLs cleanly for both Cloudinary HTTPS URLs and backend API streams', () => {
+    const cloudinaryUrl =
+      'https://res.cloudinary.com/demo-cloud/image/upload/v1700000000/amendflow/orgs/1/doc.pdf';
     expect(
-      resolveUploadedDocumentUrl({ _id: 'abc', fileUrl: signedS3Url }, 'https://amendflow-api.onrender.com')
-    ).toBe(signedS3Url);
+      resolveUploadedDocumentUrl({ _id: 'abc', fileUrl: cloudinaryUrl }, 'https://amendflow-api.onrender.com')
+    ).toBe(cloudinaryUrl);
 
     expect(
       resolveUploadedDocumentUrl(

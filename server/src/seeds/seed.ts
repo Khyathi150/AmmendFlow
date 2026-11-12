@@ -16,28 +16,88 @@ import { ActivityLog } from '../models/ActivityLog.js';
 import { DrawingAnnotation } from '../models/DrawingAnnotation.js';
 import { Attachment } from '../models/Attachment.js';
 
-export async function seedDatabase() {
-  console.log('--- Seeding AmendFlow Demonstration Database ---');
+export interface SeedDatabaseOptions {
+  nodeEnv?: string;
+  mongoUri?: string;
+  allowDemoSeed?: boolean;
+  demoPassword?: string;
+  hasResetFlag?: boolean;
+  confirmResetLocal?: boolean;
+}
 
-  // Clear existing collections
-  await Promise.all([
-    User.deleteMany({}),
-    Organization.deleteMany({}),
-    OrganizationMember.deleteMany({}),
-    Project.deleteMany({}),
-    ProjectMember.deleteMany({}),
-    BOQItem.deleteMany({}),
-    ChangeOrder.deleteMany({}),
-    CostEstimate.deleteMany({}),
-    Approval.deleteMany({}),
-    Invoice.deleteMany({}),
-    Payment.deleteMany({}),
-    ActivityLog.deleteMany({}),
-    DrawingAnnotation.deleteMany({}),
-    Attachment.deleteMany({}),
+export async function seedDatabase(options: SeedDatabaseOptions = {}) {
+  const effectiveNodeEnv = (options.nodeEnv ?? process.env.NODE_ENV ?? 'development').trim();
+  if (effectiveNodeEnv === 'production') {
+    throw new Error(
+      '[Seed] FATAL: Destructive or demo database seeding is disabled when NODE_ENV=production.'
+    );
+  }
+
+  const allowDemoSeed =
+    options.allowDemoSeed ?? process.env.ALLOW_DEMO_SEED?.trim().toLowerCase() === 'true';
+  if (!allowDemoSeed) {
+    throw new Error(
+      '[Seed] Refusing to seed automatically. Set ALLOW_DEMO_SEED=true explicitly in a non-production environment.'
+    );
+  }
+
+  const demoPassword = (options.demoPassword ?? process.env.SEED_DEMO_PASSWORD ?? '').trim();
+  if (!demoPassword || demoPassword.length < 8) {
+    throw new Error(
+      '[Seed] SEED_DEMO_PASSWORD (>= 8 characters) must be configured before running demo seeding.'
+    );
+  }
+
+  console.log('--- Seeding AmendFlow Non-Production Demonstration Database ---');
+
+  const mongoUri = (options.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
+  const isRemoteOrAtlas =
+    mongoUri.startsWith('mongodb+srv://') ||
+    (mongoUri !== '' && !/^mongodb:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(mongoUri));
+
+  const [existingUsers, existingOrgs, existingProjects] = await Promise.all([
+    User.estimatedDocumentCount(),
+    Organization.estimatedDocumentCount(),
+    Project.estimatedDocumentCount(),
   ]);
+  const hasExistingData = existingUsers > 0 || existingOrgs > 0 || existingProjects > 0;
 
-  console.log('Cleared existing database records.');
+  if (hasExistingData) {
+    if (isRemoteOrAtlas) {
+      throw new Error(
+        '[Seed] FATAL: Existing data detected on remote/Atlas database. Automatic deletion of remote collections is strictly prohibited.'
+      );
+    }
+
+    const hasResetFlag = options.hasResetFlag ?? process.argv.includes('--reset-local');
+    const confirmResetLocal =
+      options.confirmResetLocal ?? process.env.CONFIRM_SEED_RESET === 'DELETE_LOCAL_DATA';
+
+    if (!hasResetFlag || !confirmResetLocal) {
+      throw new Error(
+        '[Seed] Existing local database records detected. Aborting without deleting collections. Pass --reset-local and CONFIRM_SEED_RESET=DELETE_LOCAL_DATA to reset local dev data explicitly.'
+      );
+    }
+
+    await Promise.all([
+      User.deleteMany({}),
+      Organization.deleteMany({}),
+      OrganizationMember.deleteMany({}),
+      Project.deleteMany({}),
+      ProjectMember.deleteMany({}),
+      BOQItem.deleteMany({}),
+      ChangeOrder.deleteMany({}),
+      CostEstimate.deleteMany({}),
+      Approval.deleteMany({}),
+      Invoice.deleteMany({}),
+      Payment.deleteMany({}),
+      ActivityLog.deleteMany({}),
+      DrawingAnnotation.deleteMany({}),
+      Attachment.deleteMany({}),
+    ]);
+
+    console.log('Explicit local dev reset requested; cleared existing local collections.');
+  }
 
   // 1. Create Organization: Northstar Infrastructure Pvt. Ltd.
   const org = new Organization({
@@ -62,9 +122,9 @@ export async function seedDatabase() {
   await org.save();
   console.log(`Created Organization: ${org.name} (${org._id})`);
 
-  // 2. Create Users across all 6 core personas
+  // 2. Create Users across all 6 core personas using explicitly provided SEED_DEMO_PASSWORD
   const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash('DemoPass123!', salt);
+  const passwordHash = await bcrypt.hash(demoPassword, salt);
 
   const usersData = [
     {
@@ -636,7 +696,7 @@ export async function seedDatabase() {
   console.log('--- Database Seeding Completed Successfully! ---');
   console.log('Summary of Seeded Data:');
   console.log(`- Organization: Northstar Infrastructure Pvt. Ltd.`);
-  console.log(`- 6 Demo Accounts with password "DemoPass123!":`);
+  console.log(`- 6 Demo Accounts seeded using your configured SEED_DEMO_PASSWORD:`);
   console.log(`  * Owner / Director: vikram@northstarinfra.com`);
   console.log(`  * Project Manager: arjun.pm@northstarinfra.com`);
   console.log(`  * Site Engineer: priya.site@northstarinfra.com`);
@@ -649,11 +709,15 @@ export async function seedDatabase() {
 
 // Execute if run directly
 if (process.argv[1]?.endsWith('seed.ts') || process.argv[1]?.endsWith('seed.js')) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[Seed] FATAL: Demo seed script is disabled in production.');
+    process.exit(1);
+  }
   connectDB()
-    .then(seedDatabase)
+    .then(() => seedDatabase())
     .then(() => disconnectDB())
     .catch((err) => {
-      console.error('Seed execution failed:', err);
+      console.error('Seed execution failed:', err.message || err);
       process.exit(1);
     });
 }

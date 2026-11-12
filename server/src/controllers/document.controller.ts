@@ -12,7 +12,7 @@ import { storageService } from '../services/storage.service.js';
 import { sendSuccess, sendError } from '../utils/responseEnvelope.js';
 import { z } from 'zod';
 
-// Configure Multer in-memory storage so uploads delegate cleanly to StorageService (S3 in prod, local disk in dev)
+// Configure Multer in-memory storage so uploads delegate cleanly to StorageService (Cloudinary in prod, local disk in dev)
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
@@ -33,11 +33,19 @@ async function serializeAttachmentWithUrl(req: Request, doc: IAttachment | any) 
   const backendOrigin = getPublicBackendOrigin(req);
 
   let fileUrl: string | null = null;
-  if (plain.storageProvider === 's3' && plain.storageKey) {
+  if (plain.storageProvider === 'cloudinary' && (plain.storageUrl || plain.storageKey)) {
     try {
-      fileUrl = await storageService.getSignedDownloadUrl('s3', plain.storageKey, plain.originalName, false);
+      fileUrl = await storageService.getDownloadUrl(
+        'cloudinary',
+        plain.storageKey || '',
+        false,
+        {
+          storageUrl: plain.storageUrl,
+          resourceType: plain.cloudinaryResourceType,
+        }
+      );
     } catch (err) {
-      console.warn('[Documents] Unable to generate signed URL, falling back to authenticated API path:', err);
+      console.warn('[Documents] Unable to resolve Cloudinary URL, falling back to authenticated API path:', err);
     }
   }
 
@@ -104,6 +112,8 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
       sizeBytes: file.size,
       storageProvider: uploaded.storageProvider,
       storageKey: uploaded.storageKey,
+      storageUrl: uploaded.storageUrl,
+      cloudinaryResourceType: uploaded.resourceType,
       storagePath: '', // set right below using _id
       category,
       uploadedBy: req.user?._id,
@@ -114,8 +124,10 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
     try {
       await attachment.save();
     } catch (saveErr) {
-      // Clean up orphaned uploaded blob if DB persistence fails (e.g. validation error)
-      await storageService.deleteObject(uploaded.storageProvider, uploaded.storageKey);
+      // Clean up orphaned uploaded asset if DB persistence fails (e.g. validation error)
+      await storageService.deleteObject(uploaded.storageProvider, uploaded.storageKey, {
+        resourceType: uploaded.resourceType,
+      });
       throw saveErr;
     }
 
@@ -178,7 +190,10 @@ export async function streamDocumentFile(req: Request, res: Response): Promise<v
 
     let objectStreamResult;
     try {
-      objectStreamResult = await storageService.getObjectStream(provider, key);
+      objectStreamResult = await storageService.getObjectStream(provider, key, {
+        storageUrl: doc.storageUrl,
+        resourceType: doc.cloudinaryResourceType,
+      });
     } catch (storageErr: any) {
       if (storageErr?.code === 'ENOENT' || storageErr?.name === 'NoSuchKey') {
         sendError(res, 'FILE_NOT_FOUND', 'Document binary file could not be located in storage', 404);

@@ -10,7 +10,8 @@ import { connectDB, disconnectDB } from '../config/db.js';
 import { isOriginAllowed } from '../config/cors.js';
 import { createApp } from '../app.js';
 import { initSocketIO } from '../config/socket.js';
-import { createStorageService } from '../services/storage.service.js';
+import { createStorageService, CloudinaryAdapter } from '../services/storage.service.js';
+import { seedDatabase } from '../seeds/seed.js';
 import { Organization } from '../models/Organization.js';
 import { User } from '../models/User.js';
 import { OrganizationMember } from '../models/OrganizationMember.js';
@@ -24,14 +25,13 @@ const VALID_PROD_ENV: NodeJS.ProcessEnv = {
   MONGODB_URI: 'mongodb+srv://produser:s3cur3p4ss@cluster0.example.mongodb.net/amendflow',
   JWT_SECRET: 'b9c4e7f2a1d8036f45e98c12ab74de90f123456789abcdef',
   CLIENT_URL: 'https://app.amendflow.com/',
-  STORAGE_PROVIDER: 's3',
-  S3_BUCKET: 'amendflow-prod-docs',
-  S3_REGION: 'ap-south-1',
-  S3_ACCESS_KEY_ID: 'AKIAEXAMPLEACCESSKEY12',
-  S3_SECRET_ACCESS_KEY: 'exampleSecretAccessKey0123456789abcdef',
+  STORAGE_PROVIDER: 'cloudinary',
+  CLOUDINARY_CLOUD_NAME: 'amendflow-cloud',
+  CLOUDINARY_API_KEY: '9988776655443322',
+  CLOUDINARY_API_SECRET: 'cloudinary_secret_key_for_prod_test',
 };
 
-describe('Production Security Config, CORS, Database & S3 Object Storage', () => {
+describe('Production Security Config, CORS, Database & Cloudinary Storage', () => {
   it('1. Requires a strong non-placeholder JWT_SECRET in production and rejects weak fallbacks', () => {
     const valid = buildEnvConfig(VALID_PROD_ENV);
     assert.equal(valid.JWT_SECRET, VALID_PROD_ENV.JWT_SECRET);
@@ -114,62 +114,73 @@ describe('Production Security Config, CORS, Database & S3 Object Storage', () =>
     assert.equal(blockedLocalhostRes.headers['access-control-allow-origin'], undefined);
   });
 
-  it('5. Supports configurable S3-compatible persistent object storage in production', async () => {
+  it('5. Supports configurable Cloudinary persistent storage in production while keeping local uploads in dev', async () => {
     assert.throws(
       () => buildEnvConfig({ ...VALID_PROD_ENV, STORAGE_PROVIDER: 'local' }),
       /STORAGE_PROVIDER=local/
     );
     assert.throws(
-      () => buildEnvConfig({ ...VALID_PROD_ENV, S3_BUCKET: '' }),
-      /S3_BUCKET/
+      () => buildEnvConfig({ ...VALID_PROD_ENV, CLOUDINARY_CLOUD_NAME: '' }),
+      /CLOUDINARY_CLOUD_NAME/
+    );
+    assert.throws(
+      () => buildEnvConfig({ ...VALID_PROD_ENV, CLOUDINARY_API_SECRET: '' }),
+      /CLOUDINARY_API_SECRET/
     );
 
-    const prodConfig = buildEnvConfig(VALID_PROD_ENV);
-    const storedObjects = new Map<string, { body: Buffer; contentType: string }>();
+    const parsedFromUrl = buildEnvConfig({
+      ...VALID_PROD_ENV,
+      CLOUDINARY_CLOUD_NAME: '',
+      CLOUDINARY_API_KEY: '',
+      CLOUDINARY_API_SECRET: '',
+      CLOUDINARY_URL: 'cloudinary://11223344:supersecret@amendflow-url-cloud',
+    });
+    assert.equal(parsedFromUrl.CLOUDINARY_CLOUD_NAME, 'amendflow-url-cloud');
+    assert.equal(parsedFromUrl.CLOUDINARY_API_KEY, '11223344');
+    assert.equal(parsedFromUrl.CLOUDINARY_API_SECRET, 'supersecret');
 
-    const mockS3Client = {
-      async send(command: any) {
-        const name = command.constructor.name;
-        const input = command.input;
-        if (name === 'PutObjectCommand') {
-          storedObjects.set(input.Key, {
-            body: Buffer.isBuffer(input.Body) ? input.Body : Buffer.from(input.Body),
-            contentType: input.ContentType,
-          });
-          return { ETag: '"mock-etag"' };
-        }
-        if (name === 'GetObjectCommand') {
-          const item = storedObjects.get(input.Key);
-          if (!item) {
-            const err: any = new Error('NoSuchKey');
-            err.name = 'NoSuchKey';
-            throw err;
-          }
-          return {
-            Body: Readable.from(item.body),
-            ContentType: item.contentType,
-            ContentLength: item.body.length,
-          };
-        }
-        if (name === 'DeleteObjectCommand') {
-          storedObjects.delete(input.Key);
-          return {};
-        }
-        throw new Error(`Unexpected command ${name}`);
+    const prodConfig = buildEnvConfig(VALID_PROD_ENV);
+    const storedAssets = new Map<string, { buffer: Buffer; url: string }>();
+
+    const mockCloudinary: CloudinaryAdapter = {
+      async uploadBuffer({ buffer, folder, publicId }) {
+        const key = `${folder}/${publicId}`;
+        const url = `https://res.cloudinary.com/amendflow-cloud/image/upload/v1/${key}.pdf`;
+        storedAssets.set(key, { buffer, url });
+        return {
+          public_id: key,
+          secure_url: url,
+          resource_type: 'image',
+        };
+      },
+      buildUrl(publicId, options) {
+        const flag = options?.asAttachment ? 'fl_attachment/' : '';
+        return `https://res.cloudinary.com/amendflow-cloud/${options?.resourceType || 'image'}/upload/${flag}${publicId}`;
+      },
+      async destroy(publicId) {
+        storedAssets.delete(publicId);
       },
     };
 
-    const s3Service = createStorageService(
-      prodConfig,
-      mockS3Client,
-      async (_client, cmd) =>
-        `https://amendflow-prod-docs.s3.ap-south-1.amazonaws.com/${cmd.input.Key}?X-Amz-Signature=signed`
-    );
+    const mockFetch = async (url: string): Promise<Response> => {
+      const matched = Array.from(storedAssets.values()).find((entry) => entry.url === url);
+      if (!matched) {
+        return new Response(null, { status: 404 });
+      }
+      return new Response(new Uint8Array(matched.buffer), {
+        status: 200,
+        headers: {
+          'content-type': 'application/pdf',
+          'content-length': String(matched.buffer.length),
+        },
+      });
+    };
 
-    assert.equal(s3Service.provider, 's3');
+    const cloudService = createStorageService(prodConfig, mockCloudinary, mockFetch);
+    assert.equal(cloudService.provider, 'cloudinary');
 
-    const payload = Buffer.from('%PDF-1.4 S3 Persistent Structural Drawing');
-    const uploaded = await s3Service.uploadObject({
+    const payload = Buffer.from('%PDF-1.4 Cloudinary Persistent Structural Drawing');
+    const uploaded = await cloudService.uploadObject({
       orgId: 'org123',
       projectId: 'proj456',
       filename: 'drawing-rev2.pdf',
@@ -177,24 +188,109 @@ describe('Production Security Config, CORS, Database & S3 Object Storage', () =>
       mimeType: 'application/pdf',
     });
 
-    assert.equal(uploaded.storageProvider, 's3');
-    assert.equal(uploaded.storageKey, 'orgs/org123/projects/proj456/drawing-rev2.pdf');
+    assert.equal(uploaded.storageProvider, 'cloudinary');
+    assert.equal(uploaded.storageKey, 'amendflow/orgs/org123/projects/proj456/drawing-rev2');
+    assert.ok(uploaded.storageUrl?.startsWith('https://res.cloudinary.com/amendflow-cloud/'));
 
-    const signedUrl = await s3Service.getSignedDownloadUrl(
-      's3',
-      uploaded.storageKey,
-      'Original.pdf',
-      false
-    );
-    assert.ok(signedUrl?.startsWith('https://amendflow-prod-docs.s3.ap-south-1.amazonaws.com/'));
+    const downloadUrl = await cloudService.getDownloadUrl('cloudinary', uploaded.storageKey, false, {
+      storageUrl: uploaded.storageUrl,
+      resourceType: uploaded.resourceType,
+    });
+    assert.equal(downloadUrl, uploaded.storageUrl);
 
-    const streamRes = await s3Service.getObjectStream('s3', uploaded.storageKey);
+    const streamRes = await cloudService.getObjectStream('cloudinary', uploaded.storageKey, {
+      storageUrl: uploaded.storageUrl,
+      resourceType: uploaded.resourceType,
+    });
     const chunks: Buffer[] = [];
     for await (const chunk of streamRes.stream) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
     assert.equal(Buffer.concat(chunks).toString('utf8'), payload.toString('utf8'));
     assert.equal(streamRes.contentType, 'application/pdf');
+
+    await cloudService.deleteObject('cloudinary', uploaded.storageKey, {
+      resourceType: uploaded.resourceType,
+    });
+    assert.equal(storedAssets.size, 0);
+  });
+});
+
+describe('Demo Seeding Safety & Production Guards', () => {
+  before(async () => {
+    await connectDB();
+  });
+
+  after(async () => {
+    await disconnectDB();
+  });
+
+  it('6. Blocks seedDatabase in production, without explicit opt-in, and refuses auto-deleting existing collections', async () => {
+    await assert.rejects(
+      async () =>
+        seedDatabase({
+          nodeEnv: 'production',
+          allowDemoSeed: true,
+          demoPassword: 'StrongLocalPassword1!',
+        }),
+      /disabled when NODE_ENV=production/i
+    );
+
+    await assert.rejects(
+      async () =>
+        seedDatabase({
+          nodeEnv: 'development',
+          allowDemoSeed: false,
+          demoPassword: 'StrongLocalPassword1!',
+        }),
+      /ALLOW_DEMO_SEED=true/i
+    );
+
+    await assert.rejects(
+      async () =>
+        seedDatabase({
+          nodeEnv: 'development',
+          allowDemoSeed: true,
+          demoPassword: '',
+        }),
+      /SEED_DEMO_PASSWORD/i
+    );
+
+    await seedDatabase({
+      nodeEnv: 'development',
+      mongoUri: '',
+      allowDemoSeed: true,
+      demoPassword: 'ControlledLocalSeedPass!99',
+    });
+
+    const userCountAfterSeed = await User.estimatedDocumentCount();
+    assert.equal(userCountAfterSeed, 6);
+
+    await assert.rejects(
+      async () =>
+        seedDatabase({
+          nodeEnv: 'development',
+          mongoUri: '',
+          allowDemoSeed: true,
+          demoPassword: 'ControlledLocalSeedPass!99',
+          hasResetFlag: false,
+          confirmResetLocal: false,
+        }),
+      /Aborting without deleting collections/i
+    );
+
+    await assert.rejects(
+      async () =>
+        seedDatabase({
+          nodeEnv: 'development',
+          mongoUri: 'mongodb+srv://produser:pw@cluster0.mongodb.net/amendflow',
+          allowDemoSeed: true,
+          demoPassword: 'ControlledLocalSeedPass!99',
+          hasResetFlag: true,
+          confirmResetLocal: true,
+        }),
+      /Existing data detected on remote\/Atlas database/i
+    );
   });
 });
 

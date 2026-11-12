@@ -95,7 +95,7 @@ export const DocumentsView: React.FC = () => {
         objectUrl = URL.createObjectURL(blob);
         setPreviewUrl(objectUrl);
       } catch {
-        // Fallback to resolved signed S3 URL or configured backend document URL if available
+        // Fallback to resolved Cloudinary HTTPS URL or configured backend document URL if available
         if (active && activeDoc?.fileUrl && /^https?:\/\//i.test(activeDoc.fileUrl)) {
           setPreviewUrl(resolveUploadedDocumentUrl(activeDoc));
         }

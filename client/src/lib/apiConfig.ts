@@ -35,7 +35,7 @@ export interface DocumentUrlInput {
 
 /**
  * Resolves an uploaded document URL for both same-origin local proxy
- * and separate frontend/backend deployments (absolute S3 signed URL or backend /api/documents/:id/file).
+ * and separate frontend/backend deployments (absolute Cloudinary HTTPS URL or backend /api/documents/:id/file).
  */
 export function resolveUploadedDocumentUrl(
   docOrPath: string | DocumentUrlInput | null | undefined,

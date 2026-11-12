@@ -1,13 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v2 as cloudinaryV2 } from 'cloudinary';
 import { env, EnvConfig, StorageProviderType } from '../config/env.js';
 
 export interface UploadObjectParams {
@@ -21,6 +15,8 @@ export interface UploadObjectParams {
 export interface UploadedObjectResult {
   storageProvider: StorageProviderType;
   storageKey: string;
+  storageUrl?: string;
+  resourceType?: string;
 }
 
 export interface ObjectStreamResult {
@@ -29,21 +25,45 @@ export interface ObjectStreamResult {
   contentLength?: number;
 }
 
-export interface S3ClientLike {
-  send(command: any): Promise<any>;
+export interface StorageLookupOptions {
+  storageUrl?: string;
+  resourceType?: string;
 }
+
+export interface CloudinaryAdapter {
+  uploadBuffer(params: {
+    buffer: Buffer;
+    folder: string;
+    publicId: string;
+  }): Promise<{ public_id: string; secure_url: string; resource_type?: string }>;
+  buildUrl(
+    publicId: string,
+    options?: { resourceType?: string; asAttachment?: boolean }
+  ): string;
+  destroy(publicId: string, resourceType?: string): Promise<void>;
+}
+
+export type FetchFn = (url: string) => Promise<Response>;
 
 export interface StorageService {
   readonly provider: StorageProviderType;
   uploadObject(params: UploadObjectParams): Promise<UploadedObjectResult>;
-  getObjectStream(provider: StorageProviderType, key: string): Promise<ObjectStreamResult>;
-  getSignedDownloadUrl(
+  getObjectStream(
     provider: StorageProviderType,
     key: string,
-    originalName?: string,
-    asAttachment?: boolean
+    options?: StorageLookupOptions
+  ): Promise<ObjectStreamResult>;
+  getDownloadUrl(
+    provider: StorageProviderType,
+    key: string,
+    asAttachment?: boolean,
+    options?: StorageLookupOptions
   ): Promise<string | null>;
-  deleteObject(provider: StorageProviderType, key: string): Promise<void>;
+  deleteObject(
+    provider: StorageProviderType,
+    key: string,
+    options?: StorageLookupOptions
+  ): Promise<void>;
 }
 
 function buildSafeLocalPath(uploadDir: string, storageKey: string): string {
@@ -56,44 +76,90 @@ function buildSafeLocalPath(uploadDir: string, storageKey: string): string {
   return resolved;
 }
 
-export type SignedUrlGenerator = (
-  client: S3ClientLike,
-  command: GetObjectCommand,
-  options: { expiresIn: number }
-) => Promise<string>;
+function buildCloudinaryPublicId(filename: string, mimeType: string): string {
+  const safeName = path.basename(filename);
+  const isImageOrPdf = mimeType.startsWith('image/') || mimeType === 'application/pdf';
+  return isImageOrPdf ? path.parse(safeName).name : safeName;
+}
+
+export function createCloudinaryAdapter(
+  config: Pick<
+    EnvConfig,
+    'CLOUDINARY_CLOUD_NAME' | 'CLOUDINARY_API_KEY' | 'CLOUDINARY_API_SECRET'
+  >
+): CloudinaryAdapter {
+  cloudinaryV2.config({
+    cloud_name: config.CLOUDINARY_CLOUD_NAME,
+    api_key: config.CLOUDINARY_API_KEY,
+    api_secret: config.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+
+  return {
+    uploadBuffer({ buffer, folder, publicId }) {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinaryV2.uploader.upload_stream(
+          {
+            folder,
+            public_id: publicId,
+            resource_type: 'auto',
+          },
+          (error, result) => {
+            if (error || !result) {
+              return reject(error || new Error('Cloudinary upload did not return a result.'));
+            }
+            resolve({
+              public_id: result.public_id,
+              secure_url: result.secure_url,
+              resource_type: result.resource_type,
+            });
+          }
+        );
+
+        Readable.from(buffer).pipe(stream);
+      });
+    },
+
+    buildUrl(publicId, options) {
+      return cloudinaryV2.url(publicId, {
+        secure: true,
+        sign_url: true,
+        resource_type: (options?.resourceType as any) || 'image',
+        flags: options?.asAttachment ? 'attachment' : undefined,
+      });
+    },
+
+    async destroy(publicId, resourceType) {
+      await cloudinaryV2.uploader.destroy(publicId, {
+        resource_type: (resourceType as any) || 'image',
+        invalidate: true,
+      });
+    },
+  };
+}
 
 export function createStorageService(
   config: Pick<
     EnvConfig,
     | 'STORAGE_PROVIDER'
     | 'UPLOAD_DIR'
-    | 'S3_BUCKET'
-    | 'S3_REGION'
-    | 'S3_ACCESS_KEY_ID'
-    | 'S3_SECRET_ACCESS_KEY'
-    | 'S3_ENDPOINT'
-    | 'S3_FORCE_PATH_STYLE'
-    | 'S3_PUBLIC_URL'
-    | 'S3_SIGNED_URL_EXPIRES_SEC'
+    | 'CLOUDINARY_CLOUD_NAME'
+    | 'CLOUDINARY_API_KEY'
+    | 'CLOUDINARY_API_SECRET'
+    | 'CLOUDINARY_FOLDER'
   > = env,
-  s3ClientOverride?: S3ClientLike,
-  signUrlFn: SignedUrlGenerator = (client, cmd, opts) =>
-    getSignedUrl(client as S3Client, cmd, opts)
+  cloudinaryOverride?: CloudinaryAdapter,
+  fetchFn: FetchFn = fetch
 ): StorageService {
-  let s3Client: S3ClientLike | null = s3ClientOverride || null;
+  let cloudinaryAdapter: CloudinaryAdapter | null = cloudinaryOverride || null;
 
-  function ensureS3Client(): S3ClientLike {
-    if (s3Client) return s3Client;
-    s3Client = new S3Client({
-      region: config.S3_REGION,
-      endpoint: config.S3_ENDPOINT || undefined,
-      forcePathStyle: config.S3_FORCE_PATH_STYLE,
-      credentials: {
-        accessKeyId: config.S3_ACCESS_KEY_ID,
-        secretAccessKey: config.S3_SECRET_ACCESS_KEY,
-      },
-    });
-    return s3Client;
+  function ensureCloudinary(): CloudinaryAdapter {
+    if (cloudinaryAdapter) return cloudinaryAdapter;
+    if (!config.CLOUDINARY_CLOUD_NAME || !config.CLOUDINARY_API_KEY || !config.CLOUDINARY_API_SECRET) {
+      throw new Error('Cannot access Cloudinary storage: Cloudinary backend credentials are not configured.');
+    }
+    cloudinaryAdapter = createCloudinaryAdapter(config);
+    return cloudinaryAdapter;
   }
 
   return {
@@ -102,18 +168,23 @@ export function createStorageService(
     async uploadObject({ orgId, projectId, filename, buffer, mimeType }) {
       const safeName = path.basename(filename);
 
-      if (config.STORAGE_PROVIDER === 's3') {
-        const key = `orgs/${orgId}/projects/${projectId}/${safeName}`;
-        const client = ensureS3Client();
-        await client.send(
-          new PutObjectCommand({
-            Bucket: config.S3_BUCKET,
-            Key: key,
-            Body: buffer,
-            ContentType: mimeType,
-          })
-        );
-        return { storageProvider: 's3', storageKey: key };
+      if (config.STORAGE_PROVIDER === 'cloudinary') {
+        const client = ensureCloudinary();
+        const folder = `${config.CLOUDINARY_FOLDER || 'amendflow'}/orgs/${orgId}/projects/${projectId}`;
+        const publicId = buildCloudinaryPublicId(safeName, mimeType);
+
+        const uploaded = await client.uploadBuffer({
+          buffer,
+          folder,
+          publicId,
+        });
+
+        return {
+          storageProvider: 'cloudinary',
+          storageKey: uploaded.public_id,
+          storageUrl: uploaded.secure_url,
+          resourceType: uploaded.resource_type,
+        };
       }
 
       // Development/Test Local Disk Storage
@@ -123,29 +194,32 @@ export function createStorageService(
       return { storageProvider: 'local', storageKey: safeName };
     },
 
-    async getObjectStream(provider, key) {
-      if (provider === 's3') {
-        if (!config.S3_BUCKET) {
-          throw new Error('Cannot retrieve S3 object: S3_BUCKET is not configured.');
+    async getObjectStream(provider, key, options) {
+      if (provider === 'cloudinary') {
+        const targetUrl =
+          options?.storageUrl ||
+          ensureCloudinary().buildUrl(key, {
+            resourceType: options?.resourceType,
+          });
+
+        const response = await fetchFn(targetUrl);
+        if (response.status === 404) {
+          const err: any = new Error('NoSuchKey');
+          err.name = 'NoSuchKey';
+          throw err;
         }
-        const client = ensureS3Client();
-        const result = await client.send(
-          new GetObjectCommand({
-            Bucket: config.S3_BUCKET,
-            Key: key,
-          })
-        );
-        if (!result.Body) {
-          throw new Error('Object body is empty in S3 response.');
+        if (!response.ok || !response.body) {
+          throw new Error(`Failed to fetch Cloudinary asset (${response.status}).`);
         }
-        const stream =
-          result.Body instanceof Readable
-            ? result.Body
-            : Readable.from(result.Body as AsyncIterable<Uint8Array>);
+
+        const contentLengthHeader = response.headers.get('content-length');
+        const contentLength = contentLengthHeader ? Number.parseInt(contentLengthHeader, 10) : undefined;
+        const stream = Readable.fromWeb(response.body as any);
+
         return {
           stream,
-          contentType: result.ContentType,
-          contentLength: result.ContentLength,
+          contentType: response.headers.get('content-type') || undefined,
+          contentLength: Number.isFinite(contentLength) ? contentLength : undefined,
         };
       }
 
@@ -157,43 +231,24 @@ export function createStorageService(
       };
     },
 
-    async getSignedDownloadUrl(provider, key, originalName, asAttachment = false) {
-      if (provider !== 's3') {
+    async getDownloadUrl(provider, key, asAttachment = false, options) {
+      if (provider !== 'cloudinary') {
         return null;
       }
 
-      if (config.S3_PUBLIC_URL && !asAttachment) {
-        return `${config.S3_PUBLIC_URL}/${key}`;
+      if (options?.storageUrl && !asAttachment) {
+        return options.storageUrl;
       }
 
-      if (!config.S3_BUCKET) {
-        return null;
-      }
-
-      const client = ensureS3Client();
-      const safeName = originalName ? path.basename(originalName).replace(/"/g, '') : undefined;
-      const command = new GetObjectCommand({
-        Bucket: config.S3_BUCKET,
-        Key: key,
-        ResponseContentDisposition: safeName
-          ? `${asAttachment ? 'attachment' : 'inline'}; filename="${safeName}"`
-          : undefined,
-      });
-
-      return signUrlFn(client, command, {
-        expiresIn: config.S3_SIGNED_URL_EXPIRES_SEC,
+      return ensureCloudinary().buildUrl(key, {
+        resourceType: options?.resourceType,
+        asAttachment,
       });
     },
 
-    async deleteObject(provider, key) {
-      if (provider === 's3') {
-        const client = ensureS3Client();
-        await client.send(
-          new DeleteObjectCommand({
-            Bucket: config.S3_BUCKET,
-            Key: key,
-          })
-        );
+    async deleteObject(provider, key, options) {
+      if (provider === 'cloudinary') {
+        await ensureCloudinary().destroy(key, options?.resourceType);
         return;
       }
 

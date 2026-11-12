@@ -16,7 +16,7 @@ for (const envPath of candidateEnvPaths) {
   }
 }
 
-export type StorageProviderType = 'local' | 's3';
+export type StorageProviderType = 'local' | 'cloudinary';
 
 export interface EnvConfig {
   PORT: number;
@@ -28,14 +28,10 @@ export interface EnvConfig {
   CLIENT_URL: string;
   STORAGE_PROVIDER: StorageProviderType;
   UPLOAD_DIR: string;
-  S3_BUCKET: string;
-  S3_REGION: string;
-  S3_ACCESS_KEY_ID: string;
-  S3_SECRET_ACCESS_KEY: string;
-  S3_ENDPOINT: string;
-  S3_FORCE_PATH_STYLE: boolean;
-  S3_PUBLIC_URL: string;
-  S3_SIGNED_URL_EXPIRES_SEC: number;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
+  CLOUDINARY_FOLDER: string;
   PUBLIC_API_URL: string;
 }
 
@@ -132,54 +128,62 @@ export function buildEnvConfig(rawEnv: NodeJS.ProcessEnv): EnvConfig {
     clientUrl = normalizeOrigin(rawClientUrl || 'http://localhost:5173', 'CLIENT_URL');
   }
 
-  // 4. Persistent Object Storage vs Development Local Storage enforcement
+  // 4. Persistent Cloudinary Object Storage vs Development Local Storage enforcement
   const rawStorageProvider = rawEnv.STORAGE_PROVIDER?.trim().toLowerCase();
   let storageProvider: StorageProviderType;
   if (isProd) {
     if (rawStorageProvider === 'local') {
       throw new Error(
-        '[Config] FATAL: STORAGE_PROVIDER=local cannot be used in production. Configure persistent S3-compatible object storage (STORAGE_PROVIDER=s3).'
+        '[Config] FATAL: STORAGE_PROVIDER=local cannot be used in production. Configure persistent Cloudinary storage (STORAGE_PROVIDER=cloudinary).'
       );
     }
-    if (rawStorageProvider && rawStorageProvider !== 's3') {
+    if (rawStorageProvider && rawStorageProvider !== 'cloudinary') {
       throw new Error(
-        `[Config] FATAL: Invalid STORAGE_PROVIDER "${rawStorageProvider}". Must be "s3" in production.`
+        `[Config] FATAL: Invalid STORAGE_PROVIDER "${rawStorageProvider}". Must be "cloudinary" in production.`
       );
     }
-    storageProvider = 's3';
+    storageProvider = 'cloudinary';
   } else {
-    if (rawStorageProvider && rawStorageProvider !== 'local' && rawStorageProvider !== 's3') {
+    if (rawStorageProvider && rawStorageProvider !== 'local' && rawStorageProvider !== 'cloudinary') {
       throw new Error(
-        `[Config] FATAL: Invalid STORAGE_PROVIDER "${rawStorageProvider}". Expected "local" or "s3".`
+        `[Config] FATAL: Invalid STORAGE_PROVIDER "${rawStorageProvider}". Expected "local" or "cloudinary".`
       );
     }
-    storageProvider = rawStorageProvider === 's3' ? 's3' : 'local';
+    storageProvider = rawStorageProvider === 'cloudinary' ? 'cloudinary' : 'local';
   }
 
-  const s3Bucket = rawEnv.S3_BUCKET?.trim() || '';
-  const s3Region = rawEnv.S3_REGION?.trim() || '';
-  const s3AccessKeyId = rawEnv.S3_ACCESS_KEY_ID?.trim() || '';
-  const s3SecretAccessKey = rawEnv.S3_SECRET_ACCESS_KEY?.trim() || '';
-  const s3Endpoint = rawEnv.S3_ENDPOINT?.trim() || '';
-  const s3ForcePathStyle = rawEnv.S3_FORCE_PATH_STYLE?.trim().toLowerCase() === 'true';
-  const s3PublicUrl = rawEnv.S3_PUBLIC_URL?.trim().replace(/\/+$/, '') || '';
-  const s3SignedUrlExpiresSec =
-    Number.parseInt(rawEnv.S3_SIGNED_URL_EXPIRES_SEC?.trim() || '900', 10) || 900;
+  let cloudinaryCloudName = rawEnv.CLOUDINARY_CLOUD_NAME?.trim() || '';
+  let cloudinaryApiKey = rawEnv.CLOUDINARY_API_KEY?.trim() || '';
+  let cloudinaryApiSecret = rawEnv.CLOUDINARY_API_SECRET?.trim() || '';
+  const rawCloudinaryUrl = rawEnv.CLOUDINARY_URL?.trim() || '';
 
-  if (storageProvider === 's3') {
+  if (rawCloudinaryUrl) {
+    let parsedCloudinaryUrl: URL;
+    try {
+      parsedCloudinaryUrl = new URL(rawCloudinaryUrl);
+    } catch {
+      throw new Error('[Config] FATAL: CLOUDINARY_URL is malformed.');
+    }
+    if (parsedCloudinaryUrl.protocol !== 'cloudinary:') {
+      throw new Error('[Config] FATAL: CLOUDINARY_URL must start with cloudinary://.');
+    }
+    cloudinaryCloudName = cloudinaryCloudName || parsedCloudinaryUrl.hostname;
+    cloudinaryApiKey = cloudinaryApiKey || decodeURIComponent(parsedCloudinaryUrl.username);
+    cloudinaryApiSecret = cloudinaryApiSecret || decodeURIComponent(parsedCloudinaryUrl.password);
+  }
+
+  const cloudinaryFolder = (rawEnv.CLOUDINARY_FOLDER?.trim() || 'amendflow').replace(/^\/+|\/+$/g, '');
+
+  if (storageProvider === 'cloudinary') {
     const missing: string[] = [];
-    if (!s3Bucket || isPlaceholder(s3Bucket)) missing.push('S3_BUCKET');
-    if (!s3Region || isPlaceholder(s3Region)) missing.push('S3_REGION');
-    if (!s3AccessKeyId || isPlaceholder(s3AccessKeyId)) missing.push('S3_ACCESS_KEY_ID');
-    if (!s3SecretAccessKey || isPlaceholder(s3SecretAccessKey)) missing.push('S3_SECRET_ACCESS_KEY');
+    if (!cloudinaryCloudName || isPlaceholder(cloudinaryCloudName)) missing.push('CLOUDINARY_CLOUD_NAME');
+    if (!cloudinaryApiKey || isPlaceholder(cloudinaryApiKey)) missing.push('CLOUDINARY_API_KEY');
+    if (!cloudinaryApiSecret || isPlaceholder(cloudinaryApiSecret)) missing.push('CLOUDINARY_API_SECRET');
 
     if (missing.length > 0) {
       throw new Error(
-        `[Config] FATAL: Persistent object storage (STORAGE_PROVIDER=s3) requires valid credentials: ${missing.join(', ')}.`
+        `[Config] FATAL: Persistent Cloudinary storage (STORAGE_PROVIDER=cloudinary) requires valid backend credentials: ${missing.join(', ')}.`
       );
-    }
-    if (s3Endpoint) {
-      normalizeOrigin(s3Endpoint, 'S3_ENDPOINT');
     }
   }
 
@@ -196,14 +200,10 @@ export function buildEnvConfig(rawEnv: NodeJS.ProcessEnv): EnvConfig {
     CLIENT_URL: clientUrl,
     STORAGE_PROVIDER: storageProvider,
     UPLOAD_DIR: uploadDir,
-    S3_BUCKET: s3Bucket,
-    S3_REGION: s3Region,
-    S3_ACCESS_KEY_ID: s3AccessKeyId,
-    S3_SECRET_ACCESS_KEY: s3SecretAccessKey,
-    S3_ENDPOINT: s3Endpoint,
-    S3_FORCE_PATH_STYLE: s3ForcePathStyle,
-    S3_PUBLIC_URL: s3PublicUrl,
-    S3_SIGNED_URL_EXPIRES_SEC: s3SignedUrlExpiresSec,
+    CLOUDINARY_CLOUD_NAME: cloudinaryCloudName,
+    CLOUDINARY_API_KEY: cloudinaryApiKey,
+    CLOUDINARY_API_SECRET: cloudinaryApiSecret,
+    CLOUDINARY_FOLDER: cloudinaryFolder,
     PUBLIC_API_URL: publicApiUrl,
   };
 }

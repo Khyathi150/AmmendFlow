@@ -78,56 +78,58 @@ Contract Scope = Original Baseline BOQ Total + Approved Variations
 
 ---
 
-## 5. Demonstration Accounts
+## 5. Controlled Local Demo Seeding (Non-Production Only)
 
-The database comes pre-seeded with **Northstar Infrastructure Pvt. Ltd.** and accounts for every role:
+For local development or QA sandboxes, `npm run seed` can populate **Northstar Infrastructure Pvt. Ltd.** with 3 infrastructure projects (`PRJ-NSR-001`, `PRJ-NSR-002`, `PRJ-NSR-003`), BOQ baselines, change orders, annotations, and sample persona accounts across roles (`owner`, `project_manager`, `site_engineer`, `commercial_manager`, `finance_officer`, `client_approver`).
 
-| Role | Email Address | Password | Permissions & Focus |
-| :--- | :--- | :--- | :--- |
-| **Director / Owner** | `vikram@northstarinfra.com` | `DemoPass123!` | Full tenant control, internal sign-off, portfolio exposure |
-| **Project Manager** | `arjun.pm@northstarinfra.com` | `DemoPass123!` | Technical reviews, work authorization, site coordination |
-| **Site Engineer** | `priya.site@northstarinfra.com` | `DemoPass123!` | Change requests, drawing annotations, completion logs |
-| **Commercial Manager** | `manoj.comm@northstarinfra.com` | `DemoPass123!` | Multi-tier cost estimation, baseline BOQ, rate evaluation |
-| **Finance Officer** | `anita.fin@northstarinfra.com` | `DemoPass123!` | Invoice generation, payment allocation, balance reconciliation |
-| **Client Approver** | `client.rep@prestigecommercial.com` | `DemoPass123!` | Client portal, scope review, formal approval/rejection |
+Seed safety safeguards:
+- **Disabled in production:** The seed runner exits immediately whenever `NODE_ENV=production`.
+- **Explicit opt-in required:** Requires `ALLOW_DEMO_SEED=true` and an explicit `SEED_DEMO_PASSWORD` (>= 8 characters) from your local environment — no shared password is published or hardcoded.
+- **No automatic collection deletion:** Existing database records are never deleted automatically, and remote/Atlas databases containing data are strictly protected against scripted clearing.
 
 ---
 
-## 6. Local Quick Start (Zero-Config)
+## 6. Local Quick Start
 
-AmendFlow features an automatic embedded MongoDB fallback. You can run it immediately without needing an external database setup!
+AmendFlow uses local disk uploads (`./uploads`) and an optional embedded MongoDB Memory Server fallback during local development when `MONGODB_URI` is omitted.
 
-### 1. Clone & Install
+### 1. Install Dependencies
 ```bash
-# In the root repository directory
 npm --prefix server install
 npm --prefix client install
 ```
 
-### 2. Seed Realistic Indian Construction Data
+### 2. Configure Local Environment (Optional Zero-Config Fallback)
+Copy `server/.env.example` to `server/.env` if you want to set a local `MONGODB_URI`, custom `JWT_SECRET`, or explicit demo seeding credentials.
+
+To populate sample data into an empty local dev database:
 ```bash
+# PowerShell example:
+$env:ALLOW_DEMO_SEED="true"
+$env:SEED_DEMO_PASSWORD="choose-a-local-dev-password"
 npm run seed
 ```
 
 ### 3. Launch Development Environment
 ```bash
-# Runs backend on :5000 and frontend on :5173 with API proxy
+# Runs Express + Socket.IO backend on 0.0.0.0:5000 and Vite frontend on :5173
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser and sign in with any demo account!
+Open [http://localhost:5173](http://localhost:5173) in your browser and register a new organization or sign in with your locally seeded accounts.
 
 ---
 
-## 7. Running Automated Tests
+## 7. Running Automated Tests & Production Builds
 
 ```bash
-# Run all tests (backend governance/security + client unit tests)
+# Run production TypeScript/Vite builds for server and client
+npm run build
+
+# Run all automated tests (backend API/security/storage/seed + client unit tests)
 npm test
 
-# Run backend tests individually
+# Run individually
 npm run test:server
-
-# Run client tests individually
 npm run test:client
 ```
 Tests cover:
@@ -135,48 +137,50 @@ Tests cover:
 - Indian numbering currency formatting.
 - End-to-end 13-step construction variation & invoicing lifecycle.
 - State machine role enforcement and cross-tenant API/Socket.IO isolation.
-- Mandatory justification check for unapproved work execution.
-- Overpayment prevention on variation invoices.
-- Production startup guards (`JWT_SECRET`, `MONGODB_URI`, strict CORS, S3 object storage).
+- Mandatory justification check for unapproved work execution & invoice overpayment prevention.
+- Production startup guards (`JWT_SECRET`, `MONGODB_URI`, strict `CLIENT_URL` CORS, Socket.IO auth & room membership, Cloudinary persistent storage, and seed-script safety guards).
 
 ---
 
-## 8. Production Deployment Guide (Separate Frontend & Backend)
+## 8. Public Deployment Guide (Vercel + Render Free + MongoDB Atlas + Cloudinary)
 
-AmendFlow strictly disables ephemeral local disk uploads, allow-all CORS, fallback JWT secrets, and in-memory MongoDB fallbacks when `NODE_ENV=production`.
+In production (`NODE_ENV=production`), AmendFlow fails startup unless all security and persistence controls are properly configured: hardcoded JWT secrets, ephemeral local disk uploads, allow-all CORS, and in-memory MongoDB fallbacks are all strictly disabled.
 
-### Required Backend Environment Variables (`server/.env` or Host Secrets)
+### 1. Backend Environment Variables (Render Web Service — Root Directory: `server`)
 | Variable | Required | Description |
 | :--- | :--- | :--- |
 | `NODE_ENV` | Yes | Must be `production`. |
-| `PORT` | Yes | Assigned server listening port (default `5000`). Server binds `0.0.0.0:PORT`. |
-| `MONGODB_URI` | Yes | Production MongoDB Atlas URI (`mongodb+srv://...`). Never falls back to `MongoMemoryServer`. |
-| `JWT_SECRET` | Yes | High-entropy random secret (>= 32 characters). |
-| `CLIENT_URL` | Yes | Exact frontend origin (e.g. `https://app.amendflow.com`). Strict CORS + Socket.IO origin match. |
-| `STORAGE_PROVIDER` | Yes | Must be `s3` in production (persistent object storage). |
-| `S3_BUCKET` | Yes | Bucket name (AWS S3, Cloudflare R2, DigitalOcean Spaces, MinIO, Backblaze B2). |
-| `S3_REGION` | Yes | Bucket region (e.g. `ap-south-1` or `auto` for R2). |
-| `S3_ACCESS_KEY_ID` | Yes | Object storage access key ID. |
-| `S3_SECRET_ACCESS_KEY` | Yes | Object storage secret access key. |
-| `S3_ENDPOINT` | Optional | Custom endpoint URL for S3-compatible providers (e.g. Cloudflare R2 / MinIO). |
-| `S3_FORCE_PATH_STYLE` | Optional | Set `true` for MinIO or path-style S3 endpoints. |
-| `PUBLIC_API_URL` | Optional | Canonical public backend origin if needed behind reverse proxies. |
+| `PORT` | Auto / Yes | Assigned listening port on Render (server binds `0.0.0.0:$PORT`). |
+| `HOST` | Optional | Defaults to `0.0.0.0`. |
+| `MONGODB_URI` | Yes | MongoDB Atlas URI (`mongodb+srv://...`). Fails startup if unreachable. |
+| `JWT_SECRET` | Yes | Random high-entropy secret (>= 32 characters). |
+| `JWT_EXPIRES_IN` | Optional | Token TTL (default `7d`). |
+| `CLIENT_URL` | Yes | Exact deployed Vercel frontend URL (e.g. `https://amendflow.vercel.app`). Enforced for HTTP CORS & Socket.IO. |
+| `PUBLIC_API_URL` | Recommended | Canonical Render backend URL (e.g. `https://amendflow-api.onrender.com`) for resolved download links behind proxy. |
+| `STORAGE_PROVIDER` | Yes | Must be `cloudinary` in production (`local` is blocked). |
+| `CLOUDINARY_CLOUD_NAME` | Yes | Cloudinary cloud name (backend-only). |
+| `CLOUDINARY_API_KEY` | Yes | Cloudinary API key (backend-only). |
+| `CLOUDINARY_API_SECRET` | Yes | Cloudinary API secret (backend-only). |
+| `CLOUDINARY_FOLDER` | Optional | Base Cloudinary folder prefix (default `amendflow`). |
 
-### Required Frontend Environment Variables (`client/.env.production`)
+> Never put `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `JWT_SECRET`, or `MONGODB_URI` into any `VITE_*` frontend variable.
+
+**Render Service Settings:**
+- **Root Directory:** `server`
+- **Build Command:** `npm install && npm run build`
+- **Start Command:** `npm start`
+- **Health Check Path:** `/api/health`
+
+### 2. Frontend Environment Variables (Vercel — Root Directory: `client`)
 | Variable | Required | Description |
 | :--- | :--- | :--- |
-| `VITE_API_URL` | Yes (separate host) | Exact backend origin without `/api` suffix (e.g. `https://api.amendflow.com`). |
+| `VITE_API_URL` | Yes | Exact deployed Render backend origin without `/api` suffix (e.g. `https://amendflow-api.onrender.com`). |
 
-### Build & Start Commands
-```bash
-# 1. Build backend and frontend artifacts
-npm run build
-
-# 2. Deploy client/dist to static SPA host (Vercel/Netlify/Cloudflare Pages)
-# SPA direct-refresh rewrites are preconfigured in client/vercel.json and client/public/_redirects.
-
-# 3. Start backend API (binds 0.0.0.0:$PORT)
-npm --prefix server run start
-```
+**Vercel Project Settings:**
+- **Root Directory:** `client`
+- **Framework Preset:** `Vite`
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **SPA Routing:** Configured in `client/vercel.json` so direct page refreshes resolve cleanly to `/index.html`.
 
 
