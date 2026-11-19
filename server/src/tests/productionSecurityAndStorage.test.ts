@@ -9,7 +9,7 @@ import { buildEnvConfig, env } from '../config/env.js';
 import { connectDB, disconnectDB } from '../config/db.js';
 import { isOriginAllowed } from '../config/cors.js';
 import { createApp } from '../app.js';
-import { initSocketIO } from '../config/socket.js';
+import { initSocketIO, RoomJoinAck } from '../config/socket.js';
 import { createStorageService, CloudinaryAdapter } from '../services/storage.service.js';
 import { seedDatabase } from '../seeds/seed.js';
 import { Organization } from '../models/Organization.js';
@@ -74,13 +74,21 @@ describe('Production Security Config, CORS, Database & Cloudinary Storage', () =
     await assert.rejects(
       async () =>
         connectDB({
+          NODE_ENV: 'production',
+          MONGODB_URI: 'mongodb://127.0.0.1:59999/unreachable?serverSelectionTimeoutMS=300',
+        })
+    );
+
+    await assert.rejects(
+      async () =>
+        connectDB({
           NODE_ENV: 'development',
           MONGODB_URI: 'mongodb://127.0.0.1:59999/unreachable?serverSelectionTimeoutMS=300',
         })
     );
   });
 
-  it('3. Enforces strict production CORS matching exact CLIENT_URL only (no allow-all fallback)', async () => {
+  it('3. Enforces strict production CORS matching exact CLIENT_URL only and allows localhost in development only', async () => {
     assert.throws(
       () => buildEnvConfig({ ...VALID_PROD_ENV, CLIENT_URL: '' }),
       /CLIENT_URL/
@@ -112,6 +120,23 @@ describe('Production Security Config, CORS, Database & Cloudinary Storage', () =
       .get('/api/health')
       .set('Origin', 'http://localhost:5173');
     assert.equal(blockedLocalhostRes.headers['access-control-allow-origin'], undefined);
+
+    // Development preserves localhost access while rejecting untrusted external origins
+    const devConfig = buildEnvConfig({
+      NODE_ENV: 'development',
+      CLIENT_URL: 'http://localhost:5173',
+    });
+    const devApp = createApp(devConfig);
+
+    const devLocalRes = await request(devApp)
+      .get('/api/health')
+      .set('Origin', 'http://127.0.0.1:4173');
+    assert.equal(devLocalRes.headers['access-control-allow-origin'], 'http://127.0.0.1:4173');
+
+    const devExternalBlocked = await request(devApp)
+      .get('/api/health')
+      .set('Origin', 'https://evil-attacker.com');
+    assert.equal(devExternalBlocked.headers['access-control-allow-origin'], undefined);
   });
 
   it('5. Supports configurable Cloudinary persistent storage in production while keeping local uploads in dev', async () => {
@@ -303,6 +328,7 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
   let projectAUnassignedId: string;
   let orgAOwnerToken: string;
   let orgASiteEngToken: string;
+  let orgASuspendedToken: string;
   let orgBToken: string;
 
   const openClients: ClientSocket[] = [];
@@ -316,7 +342,7 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
       });
       openClients.push(client);
       client.on('connect', () => resolve(client));
-      client.on('connect_error', (err) => {
+      client.on('connect_error', (err: Error) => {
         client.close();
         reject(err);
       });
@@ -324,8 +350,8 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
   }
 
   function emitJoin(socket: ClientSocket, event: 'join_org' | 'join_project', targetId: string) {
-    return new Promise<{ ok: boolean; room?: string; error?: string }>((resolve) => {
-      socket.emit(event, targetId, (ack: any) => resolve(ack));
+    return new Promise<RoomJoinAck>((resolve) => {
+      socket.emit(event, targetId, (ack: RoomJoinAck) => resolve(ack));
     });
   }
 
@@ -339,7 +365,7 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
     orgAId = orgA._id.toString();
     orgBId = orgB._id.toString();
 
-    const [ownerA, engA, userB] = await Promise.all([
+    const [ownerA, engA, suspendedA, userB] = await Promise.all([
       User.create({
         name: 'Owner A',
         email: `owner-a-${Date.now()}@test.com`,
@@ -349,6 +375,12 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
       User.create({
         name: 'Site Eng A',
         email: `eng-a-${Date.now()}@test.com`,
+        passwordHash: 'hash',
+        activeOrgId: orgA._id,
+      }),
+      User.create({
+        name: 'Suspended A',
+        email: `suspended-a-${Date.now()}@test.com`,
         passwordHash: 'hash',
         activeOrgId: orgA._id,
       }),
@@ -363,6 +395,7 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
     await Promise.all([
       OrganizationMember.create({ organization: orgA._id, user: ownerA._id, role: 'owner', status: 'active' }),
       OrganizationMember.create({ organization: orgA._id, user: engA._id, role: 'site_engineer', status: 'active' }),
+      OrganizationMember.create({ organization: orgA._id, user: suspendedA._id, role: 'owner', status: 'suspended' }),
       OrganizationMember.create({ organization: orgB._id, user: userB._id, role: 'owner', status: 'active' }),
     ]);
 
@@ -399,6 +432,7 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
 
     orgAOwnerToken = jwt.sign({ userId: ownerA._id.toString(), activeOrgId: orgAId }, env.JWT_SECRET);
     orgASiteEngToken = jwt.sign({ userId: engA._id.toString(), activeOrgId: orgAId }, env.JWT_SECRET);
+    orgASuspendedToken = jwt.sign({ userId: suspendedA._id.toString(), activeOrgId: orgAId }, env.JWT_SECRET);
     orgBToken = jwt.sign({ userId: userB._id.toString(), activeOrgId: orgBId }, env.JWT_SECRET);
 
     httpServer = http.createServer(createApp(env));
@@ -426,7 +460,7 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
     await assert.rejects(() => connectSocket('invalid.jwt.token'), /UNAUTHORIZED/i);
   });
 
-  it('4b. Blocks cross-tenant org and project room joins', async () => {
+  it('4b. Blocks cross-tenant and suspended org/project room joins', async () => {
     const clientB = await connectSocket(orgBToken);
 
     const orgJoin = await emitJoin(clientB, 'join_org', orgAId);
@@ -436,6 +470,15 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
     const projJoin = await emitJoin(clientB, 'join_project', projectAId);
     assert.equal(projJoin.ok, false);
     assert.equal(projJoin.error, 'FORBIDDEN');
+
+    const suspendedSocket = await connectSocket(orgASuspendedToken);
+    const suspendedOrgJoin = await emitJoin(suspendedSocket, 'join_org', orgAId);
+    assert.equal(suspendedOrgJoin.ok, false);
+    assert.equal(suspendedOrgJoin.error, 'FORBIDDEN');
+
+    const suspendedProjJoin = await emitJoin(suspendedSocket, 'join_project', projectAId);
+    assert.equal(suspendedProjJoin.ok, false);
+    assert.equal(suspendedProjJoin.error, 'FORBIDDEN');
   });
 
   it('4c. Enforces project membership for non-admin roles while allowing authorized members and owners', async () => {
@@ -455,5 +498,84 @@ describe('Socket.IO Authentication & Room Authorization Enforcement', () => {
     const ownerSocket = await connectSocket(orgAOwnerToken);
     const ownerUnassignedJoin = await emitJoin(ownerSocket, 'join_project', projectAUnassignedId);
     assert.equal(ownerUnassignedJoin.ok, true);
+  });
+
+  it('4d. Restricts Socket.IO CORS in production to exact CLIENT_URL origin only', async () => {
+    const prodConfig = buildEnvConfig(VALID_PROD_ENV);
+    const prodServer = http.createServer(createApp(prodConfig));
+    initSocketIO(prodServer, prodConfig);
+
+    await new Promise<void>((resolve) => {
+      prodServer.listen(0, '127.0.0.1', () => resolve());
+    });
+
+    try {
+      const addr = prodServer.address() as any;
+      const prodSocketUrl = `http://127.0.0.1:${addr.port}`;
+      const prodToken = jwt.sign(
+        { userId: new (await import('mongoose')).Types.ObjectId().toString() },
+        prodConfig.JWT_SECRET
+      );
+
+      // Disallowed origins are rejected at CORS layer before auth
+      await assert.rejects(() => {
+        return new Promise<ClientSocket>((resolve, reject) => {
+          const client = socketClient(prodSocketUrl, {
+            auth: { token: prodToken },
+            extraHeaders: { origin: 'https://evil-attacker.com' },
+            transports: ['polling'],
+            reconnection: false,
+          });
+          client.on('connect', () => {
+            client.close();
+            resolve(client);
+          });
+          client.on('connect_error', (err: Error) => {
+            client.close();
+            reject(err);
+          });
+        });
+      });
+
+      await assert.rejects(() => {
+        return new Promise<ClientSocket>((resolve, reject) => {
+          const client = socketClient(prodSocketUrl, {
+            auth: { token: prodToken },
+            extraHeaders: { origin: 'http://localhost:5173' },
+            transports: ['polling'],
+            reconnection: false,
+          });
+          client.on('connect', () => {
+            client.close();
+            resolve(client);
+          });
+          client.on('connect_error', (err: Error) => {
+            client.close();
+            reject(err);
+          });
+        });
+      });
+
+      // Exact CLIENT_URL passes CORS check cleanly (and proceeds to JWT user lookup)
+      const allowedErr = await new Promise<Error>((resolve, reject) => {
+        const client = socketClient(prodSocketUrl, {
+          auth: { token: prodToken },
+          extraHeaders: { origin: 'https://app.amendflow.com' },
+          transports: ['polling'],
+          reconnection: false,
+        });
+        client.on('connect', () => {
+          client.close();
+          reject(new Error('Expected missing-user auth error after passing CORS'));
+        });
+        client.on('connect_error', (err: Error) => {
+          client.close();
+          resolve(err);
+        });
+      });
+      assert.match(allowedErr.message, /UNAUTHORIZED/i);
+    } finally {
+      await new Promise<void>((resolve) => prodServer.close(() => resolve()));
+    }
   });
 });

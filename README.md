@@ -167,7 +167,7 @@ In production (`NODE_ENV=production`), AmendFlow fails startup unless all securi
 
 **Render Service Settings:**
 - **Root Directory:** `server`
-- **Build Command:** `npm install && npm run build`
+- **Build Command:** `npm install --include=dev && npm run build`
 - **Start Command:** `npm start`
 - **Health Check Path:** `/api/health`
 
